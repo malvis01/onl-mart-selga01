@@ -1,0 +1,3 @@
+import {read,write,json,body} from "./_shared/store.mjs";
+export default async req=>{if(req.method!=="POST")return json({error:"Method not allowed"},405);const b=await body(req),users=await read("users",[]),u=users.find(x=>x.phone===b.phone&&x.role===b.role);if(!u||u.activationCode!==String(b.code))return json({error:"Invalid activation code"},400);u.status="active";delete u.activationCode;await write("users",users);return json({user:{...u,passwordHash:undefined}})}
+export const config={path:"/api/activate"};

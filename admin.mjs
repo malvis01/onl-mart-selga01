@@ -1,0 +1,7 @@
+import {read,json,body,hash} from "./_shared/store.mjs";
+const ADMIN_EMAIL=()=>Netlify.env.get("ADMIN_EMAIL")||"admin@salgadigitalmart.com"; const ADMIN_PASS=()=>Netlify.env.get("ADMIN_PASSWORD")||"CHANGE_THIS_ADMIN_PASSWORD";
+function token(){return "admin_"+hash(ADMIN_EMAIL()+ADMIN_PASS())}
+export default async req=>{if(req.method==="POST"){const b=await body(req);if(b.action!=="login"||b.email!==ADMIN_EMAIL()||b.password!==ADMIN_PASS())return json({error:"Invalid admin credentials"},401);return json({token:token()})}
+if(req.method==="GET"){if(req.headers.get("Authorization")!==`Bearer ${token()}`)return json({error:"Unauthorized"},401);const users=await read("users",[]),orders=await read("orders",[]),promotions=await read("promotions",[]);return json({stats:{users:users.length,sellers:users.filter(x=>x.role==="seller").length,orders:orders.length,revenue:orders.filter(x=>x.status==="paid").reduce((a,x)=>a+x.amount,0),commissions:orders.filter(x=>x.status==="paid").reduce((a,x)=>a+x.commission,0),promotionFees:orders.filter(x=>x.status==="paid").reduce((a,x)=>a+x.promotionFee,0)},users:users.map(x=>({phone:x.phone,role:x.role,businessName:x.businessName,status:x.status})),orders,promotions})}
+return json({error:"Method not allowed"},405)}
+export const config={path:"/api/admin"};

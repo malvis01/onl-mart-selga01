@@ -1,0 +1,13 @@
+{
+  "name": "salga-digital-mart-production",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p dist && cp -r public/* dist/ && cp -r netlify dist/netlify && cp netlify.toml dist/netlify.toml"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^9.0.0",
+    "@netlify/functions": "^3.1.0",
+    "openai": "^4.104.0"
+  }
+}

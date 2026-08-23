@@ -1,19 +1,385 @@
-import {read,write,id,now,hash,json,body} from "./_shared/store.mjs";
-export default async req=>{
- if(req.method!=="POST")return json({error:"Method not allowed"},405);
- const b=await body(req); const users=await read("users",[]);
- if(!b.phone||!b.password||!["buyer","seller"].includes(b.role))return json({error:"Phone, password and role are required"},400);
- const phone=String(b.phone).trim(); let u=users.find(x=>x.phone===phone&&x.role===b.role);
- if(b.action==="register"){
-   if(u)return json({error:"Account already exists"},409);
-   u={id:id("usr"),phone,role:b.role,passwordHash:hash(b.password),status:"pending_activation",createdAt:now()};
-   if(b.role==="seller"){if(!b.businessName||!b.bankName||!b.accountNumber)return json({error:"Business name, bank and account number are required"},400);u.businessName=b.businessName;u.email=b.email||"";u.bankName=b.bankName;u.bankCode=b.bankCode||"";u.accountNumber=b.accountNumber.replace(/\D/g,"");}
-   u.activationCode=String(Math.floor(100000+Math.random()*900000));users.push(u);await write("users",users);
-   // Production SMS/WhatsApp hook: set SMS_PROVIDER_URL/SMS_PROVIDER_TOKEN or replace sendActivation.
-   return json({activationRequired:true,activationCode:u.activationCode,user:{...u,passwordHash:undefined,activationCode:undefined}});
- }
- if(!u||u.passwordHash!==hash(b.password))return json({error:"Invalid phone number or password"},401);
- if(u.status!=="active")return json({error:"Account is not activated yet"},403);
- return json({user:{...u,passwordHash:undefined,activationCode:undefined}});
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL =
+  Netlify.env.get("SUPABASE_URL") ||
+  Netlify.env.get("VITE_SUPABASE_URL");
+
+const SUPABASE_KEY =
+  Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+  Netlify.env.get("VITE_SUPABASE_PUBLISHABLE_KEY");
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization",
+  "Access-Control-Allow-Methods":
+    "POST, OPTIONS"
+};
+
+function json(data, status = 200) {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers: {
+        ...headers,
+        "Content-Type":
+          "application/json"
+      }
+    }
+  );
 }
-export const config={path:"/api/auth"};
+
+export default async (req) => {
+
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers
+    });
+  }
+
+  if (req.method !== "POST") {
+    return json(
+      { error: "Method not allowed" },
+      405
+    );
+  }
+
+  try {
+
+    const body = await req.json();
+
+    const action =
+      body.action || "login";
+
+    const role =
+      body.role;
+
+    const phone =
+      String(body.phone || "").trim();
+
+    const password =
+      String(body.password || "");
+
+    if (
+      !phone ||
+      !password ||
+      !["buyer", "seller"].includes(role)
+    ) {
+      return json(
+        {
+          error:
+            "Phone, password and role are required."
+        },
+        400
+      );
+    }
+
+    /*
+     * Supabase Auth requires an email identifier
+     * for this application's password flow.
+     *
+     * We create a private internal email from
+     * the user's phone number.
+     */
+    const authEmail =
+      phone.replace(/\D/g, "") +
+      "@users.salgadigitalmart.local";
+
+    /*
+     * ------------------------------------------------
+     * REGISTER
+     * ------------------------------------------------
+     */
+    if (action === "register") {
+
+      if (role === "seller") {
+
+        if (
+          !body.businessName ||
+          !body.bankName ||
+          !body.accountNumber
+        ) {
+          return json(
+            {
+              error:
+                "Business name, bank and account number are required."
+            },
+            400
+          );
+        }
+      }
+
+      /*
+       * Check whether this phone already exists.
+       */
+      const { data: existing } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, phone, role"
+          )
+          .eq(
+            "phone",
+            phone
+          )
+          .maybeSingle();
+
+      if (existing) {
+        return json(
+          {
+            error:
+              "An account with this phone number already exists."
+          },
+          409
+        );
+      }
+
+      /*
+       * Create Supabase Auth user.
+       */
+      const {
+        data: authData,
+        error: authError
+      } =
+        await supabase.auth.admin.createUser({
+          email: authEmail,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            phone,
+            role,
+            full_name:
+              body.businessName ||
+              ""
+          }
+        });
+
+      if (authError) {
+        return json(
+          {
+            error:
+              authError.message
+          },
+          400
+        );
+      }
+
+      const user =
+        authData.user;
+
+      /*
+       * Create/update application profile.
+       */
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: user.id,
+              phone,
+              role,
+              full_name:
+                body.businessName ||
+                body.full_name ||
+                ""
+            },
+            {
+              onConflict: "id"
+            }
+          )
+          .select()
+          .single();
+
+      if (profileError) {
+
+        /*
+         * Remove Auth account if profile
+         * creation fails.
+         */
+        await supabase.auth.admin.deleteUser(
+          user.id
+        );
+
+        return json(
+          {
+            error:
+              profileError.message
+          },
+          500
+        );
+      }
+
+      /*
+       * Seller-specific business data.
+       */
+      if (role === "seller") {
+
+        const { error: businessError } =
+          await supabase
+            .from("businesses")
+            .insert({
+              owner_id:
+                user.id,
+              business_name:
+                String(
+                  body.businessName
+                ).trim(),
+              status:
+                "active"
+            });
+
+        if (businessError) {
+
+          await supabase.auth.admin.deleteUser(
+            user.id
+          );
+
+          return json(
+            {
+              error:
+                businessError.message
+            },
+            400
+          );
+        }
+      }
+
+      /*
+       * Sign the user in so the frontend
+       * receives a real Supabase session.
+       */
+      const {
+        data: sessionData,
+        error: signInError
+      } =
+        await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password
+        });
+
+      if (signInError) {
+        return json(
+          {
+            error:
+              signInError.message
+          },
+          400
+        );
+      }
+
+      return json({
+        success: true,
+        user: {
+          id: user.id,
+          phone,
+          role,
+          full_name:
+            profile.full_name || ""
+        },
+        session:
+          sessionData.session
+      });
+    }
+
+    /*
+     * ------------------------------------------------
+     * LOGIN
+     * ------------------------------------------------
+     */
+
+    const {
+      data: sessionData,
+      error: signInError
+    } =
+      await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password
+      });
+
+    if (signInError) {
+      return json(
+        {
+          error:
+            "Invalid phone number or password."
+        },
+        401
+      );
+    }
+
+    const authUser =
+      sessionData.user;
+
+    const { data: profile, error: profileError } =
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq(
+          "id",
+          authUser.id
+        )
+        .single();
+
+    if (profileError || !profile) {
+      return json(
+        {
+          error:
+            "User profile not found."
+        },
+        404
+      );
+    }
+
+    if (profile.role !== role) {
+      return json(
+        {
+          error:
+            "This account does not have the selected account type."
+        },
+        403
+      );
+    }
+
+    return json({
+      success: true,
+      user: {
+        id:
+          authUser.id,
+        phone:
+          profile.phone,
+        role:
+          profile.role,
+        full_name:
+          profile.full_name || ""
+      },
+      session:
+        sessionData.session
+    });
+
+  } catch (error) {
+
+    console.error(
+      "AUTH ERROR:",
+      error
+    );
+
+    return json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Authentication failed."
+      },
+      500
+    );
+  }
+};
+
+export const config = {
+  path: "/api/auth"
+};

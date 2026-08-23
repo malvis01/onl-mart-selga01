@@ -1,67 +1,1905 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SALGA Digital Mart</title><meta name="description" content="SALGA Digital Mart marketplace">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SALGA Digital Mart</title>
+<meta name="description" content="SALGA Digital Mart marketplace">
+
 <style>
-:root{--p:#075e54;--p2:#0b806f;--bg:#f5f7f8;--card:#fff;--text:#17202a;--muted:#68727d;--danger:#b42318}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--p);color:#fff;padding:14px 18px;position:sticky;top:0;z-index:10}.bar{max-width:1150px;margin:auto;display:flex;align-items:center;gap:14px}.logo{font-weight:800;font-size:21px}.spacer{flex:1}
-button,input,select,textarea{font:inherit}button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer}.btn{background:var(--p2);color:#fff}.btn.light{background:#fff;color:var(--p)}.btn.danger{background:var(--danger);color:#fff}.btn.gray{background:#e8ecef}
-main{max-width:1150px;margin:auto;padding:22px}.hero{background:linear-gradient(135deg,#075e54,#0b806f);color:#fff;border-radius:18px;padding:28px;margin-bottom:20px}.hero h1{margin:0 0 8px;font-size:34px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}.card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 2px 10px #0000000d}.product img{width:100%;height:160px;object-fit:cover;border-radius:10px;background:#e9eeee}.price{font-size:20px;font-weight:800;margin:8px 0}.muted{color:var(--muted);font-size:14px}
-.panel{background:#fff;padding:20px;border-radius:14px;margin-bottom:18px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.form{max-width:520px;margin:auto}.field{margin:10px 0}.field label{display:block;font-weight:650;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d6dde1;border-radius:8px}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.hidden{display:none}.stat{font-size:27px;font-weight:800}.tag{display:inline-block;background:#e5f5f2;color:#075e54;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #e8ecef;font-size:14px}
-.notice{padding:12px;border-radius:9px;background:#fff5d9;margin:10px 0}.success{background:#e8f7ee}.error{background:#fdecec;color:#8b1e1e}
-footer{text-align:center;color:var(--muted);padding:30px}
-@media(max-width:650px){main{padding:14px}.hero h1{font-size:27px}.bar{flex-wrap:wrap}}
+:root{
+  --p:#075e54;
+  --p2:#0b806f;
+  --bg:#f5f7f8;
+  --card:#fff;
+  --text:#17202a;
+  --muted:#68727d;
+  --danger:#b42318;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:var(--bg);
+  color:var(--text)
+}
+header{
+  background:var(--p);
+  color:#fff;
+  padding:14px 18px;
+  position:sticky;
+  top:0;
+  z-index:10
+}
+.bar{
+  max-width:1150px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  gap:14px
+}
+.logo{
+  font-weight:800;
+  font-size:21px
+}
+.spacer{flex:1}
+button,input,select,textarea{font:inherit}
+button{
+  border:0;
+  border-radius:9px;
+  padding:10px 14px;
+  cursor:pointer
+}
+.btn{
+  background:var(--p2);
+  color:#fff
+}
+.btn.light{
+  background:#fff;
+  color:var(--p)
+}
+.btn.danger{
+  background:var(--danger);
+  color:#fff
+}
+.btn.gray{
+  background:#e8ecef
+}
+main{
+  max-width:1150px;
+  margin:auto;
+  padding:22px
+}
+.hero{
+  background:linear-gradient(135deg,#075e54,#0b806f);
+  color:#fff;
+  border-radius:18px;
+  padding:28px;
+  margin-bottom:20px
+}
+.hero h1{
+  margin:0 0 8px;
+  font-size:34px
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:15px
+}
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 2px 10px #0000000d
+}
+.product img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:10px;
+  background:#e9eeee
+}
+.price{
+  font-size:20px;
+  font-weight:800;
+  margin:8px 0
+}
+.muted{
+  color:var(--muted);
+  font-size:14px
+}
+.panel{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:18px
+}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center
+}
+.form{
+  max-width:520px;
+  margin:auto
+}
+.field{
+  margin:10px 0
+}
+.field label{
+  display:block;
+  font-weight:650;
+  margin-bottom:5px
+}
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  padding:11px;
+  border:1px solid #d6dde1;
+  border-radius:8px
+}
+nav{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:14px 0
+}
+.hidden{display:none}
+.stat{
+  font-size:27px;
+  font-weight:800
+}
+.tag{
+  display:inline-block;
+  background:#e5f5f2;
+  color:#075e54;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  font-weight:700
+}
+table{
+  width:100%;
+  border-collapse:collapse
+}
+th,td{
+  text-align:left;
+  padding:10px;
+  border-bottom:1px solid #e8ecef;
+  font-size:14px
+}
+.notice{
+  padding:12px;
+  border-radius:9px;
+  background:#fff5d9;
+  margin:10px 0
+}
+.success{background:#e8f7ee}
+.error{
+  background:#fdecec;
+  color:#8b1e1e
+}
+footer{
+  text-align:center;
+  color:var(--muted);
+  padding:30px
+}
+@media(max-width:650px){
+  main{padding:14px}
+  .hero h1{font-size:27px}
+  .bar{flex-wrap:wrap}
+}
 </style>
 </head>
+
 <body>
-<header><div class="bar"><div class="logo">SALGA Digital Mart</div><div class="spacer"></div><button class="btn light" onclick="show('shop')">Shop</button><button class="btn light" onclick="show('seller')">Sell</button><button class="btn light" onclick="show('account')">Account</button><button class="btn light" onclick="show('care')">Customer Care</button><button class="btn light" onclick="show('admin')">Admin</button><button id="logout" class="btn danger hidden" onclick="logout()">Logout</button></div></header>
+
+<header>
+  <div class="bar">
+    <div class="logo">SALGA Digital Mart</div>
+    <div class="spacer"></div>
+
+    <button class="btn light" onclick="show('shop')">Shop</button>
+    <button class="btn light" onclick="show('seller')">Sell</button>
+    <button class="btn light" onclick="show('account')">Account</button>
+    <button class="btn light" onclick="show('care')">Customer Care</button>
+    <button class="btn light" onclick="show('admin')">Admin</button>
+
+    <button
+      id="logout"
+      class="btn danger hidden"
+      onclick="logout()">
+      Logout
+    </button>
+  </div>
+</header>
+
 <main>
+
 <section id="shop">
-<div class="hero"><h1>Buy and sell with SALGA.</h1><p>Shop products from local businesses, grow your business, and promote your products.</p><div class="row"><button class="btn light" onclick="show('seller')">Create business account</button><button class="btn light" onclick="show('account')">Buyer account</button></div></div>
-<div class="panel"><div class="row"><input id="search" placeholder="Search products..." style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px" oninput="loadProducts()"><select id="category" onchange="loadProducts()" style="padding:11px;border:1px solid #d6dde1;border-radius:8px"><option value="">All categories</option><option>Fashion</option><option>Electronics</option><option>Food</option><option>Beauty</option><option>Home</option><option>Services</option></select></div></div>
-<div id="products" class="grid"></div>
+
+  <div class="hero">
+    <h1>Buy and sell with SALGA.</h1>
+    <p>
+      Shop products from local businesses, grow your business,
+      and promote your products.
+    </p>
+
+    <div class="row">
+      <button
+        class="btn light"
+        onclick="show('seller')">
+        Create business account
+      </button>
+
+      <button
+        class="btn light"
+        onclick="show('account')">
+        Buyer account
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <input
+        id="search"
+        placeholder="Search products..."
+        style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px"
+        oninput="loadProducts()">
+
+      <select
+        id="category"
+        onchange="loadProducts()"
+        style="padding:11px;border:1px solid #d6dde1;border-radius:8px">
+
+        <option value="">All categories</option>
+        <option>Fashion</option>
+        <option>Electronics</option>
+        <option>Food</option>
+        <option>Beauty</option>
+        <option>Home</option>
+        <option>Services</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="products" class="grid"></div>
+
 </section>
 
-<section id="account" class="hidden"><div class="panel form"><h2>Buyer account</h2><div id="buyerLogged" class="hidden"></div><div id="buyerForm"><div class="field"><label>Phone number</label><input id="bphone" placeholder="+2348012345678"></div><div class="field"><label>Password</label><input id="bpass" type="password"></div><div class="row"><button class="btn" onclick="auth('login')">Login</button><button class="btn gray" onclick="auth('register')">Create account</button></div><p class="muted">Use your phone number and password. New accounts receive an activation code; SMS/WhatsApp delivery can be connected with your provider credentials.</p></div></div></section>
 
-<section id="seller" class="hidden"><div class="panel form"><h2>Business owner account</h2><div class="field"><label>Business name</label><input id="sname"></div><div class="field"><label>Owner phone</label><input id="sphone" placeholder="+2348012345678"></div><div class="field"><label>Email for business notifications</label><input id="semail" type="email"></div><div class="field"><label>Password</label><input id="spass" type="password"></div><div class="field"><label>Bank name</label><input id="sbank" placeholder="e.g. GTBank"></div><div class="field"><label>Bank code</label><input id="sbankcode" placeholder="e.g. 058" inputmode="numeric"><div class="field"><label>Account number</label><input id="sacct" inputmode="numeric"></div><div class="row"><button class="btn" onclick="sellerRegister()">Create business</button><button class="btn gray" onclick="sellerLogin()">Business login</button></div><p class="muted">Your bank details are used to create a Paystack subaccount for settlements. Do not submit another person's account.</p></div><div id="sellerDash" class="panel hidden"></div></section>
+<section id="account" class="hidden">
 
-<section id="care" class="hidden"><div class="panel form"><h2>💬 SALGA Customer Care</h2><p class="muted">I’m your SALGA customer-care assistant. Ask about buying, selling, payments, orders, promotions or account problems.</p><div id="careChat" class="panel" style="min-height:180px;background:#f5f7f8"></div><div class="row"><input id="careInput" placeholder="How can I help you?" style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px" onkeydown="if(event.key==='Enter')askCare()"><button class="btn" onclick="askCare()">Send</button></div></div></section>
+  <div class="panel form">
 
-<section id="admin" class="hidden"><div class="panel form"><h2>Admin access</h2><div class="field"><label>Admin email</label><input id="apassEmail" type="email"></div><div class="field"><label>Password</label><input id="apass" type="password"></div><button class="btn" onclick="adminLogin()">Open admin dashboard</button><div id="adminMsg"></div></div><div id="adminDash" class="hidden"></div></section>
+    <h2>Buyer account</h2>
+
+    <div id="buyerLogged" class="hidden"></div>
+
+    <div id="buyerForm">
+
+      <div class="field">
+        <label>Phone number</label>
+        <input
+          id="bphone"
+          placeholder="+2348012345678">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input
+          id="bpass"
+          type="password">
+      </div>
+
+      <div class="row">
+        <button
+          class="btn"
+          onclick="auth('login')">
+          Login
+        </button>
+
+        <button
+          class="btn gray"
+          onclick="auth('register')">
+          Create account
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+
+<section id="seller" class="hidden">
+
+  <div class="panel form">
+
+    <h2>Business owner account</h2>
+
+    <div class="field">
+      <label>Business name</label>
+      <input id="sname">
+    </div>
+
+    <div class="field">
+      <label>Owner phone</label>
+      <input
+        id="sphone"
+        placeholder="+2348012345678">
+    </div>
+
+    <div class="field">
+      <label>Email for business notifications</label>
+      <input
+        id="semail"
+        type="email">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input
+        id="spass"
+        type="password">
+    </div>
+
+    <div class="field">
+      <label>Bank name</label>
+      <input
+        id="sbank"
+        placeholder="e.g. GTBank">
+    </div>
+
+    <div class="field">
+      <label>Bank code</label>
+      <input
+        id="sbankcode"
+        placeholder="e.g. 058"
+        inputmode="numeric">
+    </div>
+
+    <div class="field">
+      <label>Account number</label>
+      <input
+        id="sacct"
+        inputmode="numeric">
+    </div>
+
+    <div class="row">
+
+      <button
+        class="btn"
+        onclick="sellerRegister()">
+        Create business
+      </button>
+
+      <button
+        class="btn gray"
+        onclick="sellerLogin()">
+        Business login
+      </button>
+
+    </div>
+
+  </div>
+
+  <div
+    id="sellerDash"
+    class="panel hidden">
+  </div>
+
+</section>
+
+
+<section id="care" class="hidden">
+
+  <div class="panel form">
+
+    <h2>💬 SALGA Customer Care</h2>
+
+    <p class="muted">
+      Ask about buying, selling, payments, orders,
+      promotions or account problems.
+    </p>
+
+    <div
+      id="careChat"
+      class="panel"
+      style="min-height:180px;background:#f5f7f8">
+    </div>
+
+    <div class="row">
+
+      <input
+        id="careInput"
+        placeholder="How can I help you?"
+        style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px"
+        onkeydown="if(event.key==='Enter')askCare()">
+
+      <button
+        class="btn"
+        onclick="askCare()">
+        Send
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section id="admin" class="hidden">
+
+  <div class="panel form">
+
+    <h2>Admin access</h2>
+
+    <div class="field">
+      <label>Admin email</label>
+      <input
+        id="apassEmail"
+        type="email">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input
+        id="apass"
+        type="password">
+    </div>
+
+    <button
+      class="btn"
+      onclick="adminLogin()">
+      Open admin dashboard
+    </button>
+
+    <div id="adminMsg"></div>
+
+  </div>
+
+  <div
+    id="adminDash"
+    class="hidden">
+  </div>
+
+</section>
+
 </main>
-<footer>SALGA Digital Mart • Marketplace commission 5% • Promotion service 2%</footer>
+
+<footer>
+  SALGA Digital Mart • Marketplace commission 5% • Promotion service 2%
+</footer>
+
+
 <script>
-let me=null, products=[];
-const money=n=>'₦'+Number(n||0).toLocaleString('en-NG',{maximumFractionDigits:2});
-function show(id){document.querySelectorAll('main>section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(id==='shop')loadProducts();if(id==='seller')renderSeller();if(id==='account')renderBuyer();}
-function msg(el,t,ok=false){el.innerHTML='<div class="notice '+(ok?'success':'error')+'">'+t+'</div>'}
-async function api(path,opts={}){let baseHeaders={'Content-Type':'application/json'}; if(me?.phone) baseHeaders['x-user-phone']=me.phone; if(localStorage.adminToken) baseHeaders['Authorization']='Bearer '+localStorage.adminToken; let r=await fetch('/api/'+path,{...opts,headers:{...baseHeaders,...(opts.headers||{})}});let d=await r.json().catch(()=>({error:'Invalid response'}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
-async function loadProducts(){try{let d=await api('products');products=d.products||[];let q=(document.getElementById('search')?.value||'').toLowerCase(),c=document.getElementById('category')?.value||'';let p=products.filter(x=>(!q||(`${x.name} ${x.description} ${x.category}`).toLowerCase().includes(q))&&(!c||x.category===c));document.getElementById('products').innerHTML=p.length?p.map(x=>`<div class="card product"><img src="${x.image||'https://placehold.co/600x400?text=SALGA'}"><span class="tag">${x.category||'Other'}</span><h3>${esc(x.name)}</h3><p class="muted">${esc(x.description||'')}</p><div class="price">${money(x.price)}</div><p class="muted">Seller: ${esc(x.businessName||'')}</p><button class="btn" onclick="buy('${x.id}')">Buy now</button></div>`).join(''):'<div class="panel">No products found yet.</div>'}catch(e){document.getElementById('products').innerHTML='<div class="panel error">Could not load products.</div>'}}
-async function auth(mode){try{let d=await api('auth',{method:'POST',body:JSON.stringify({action:mode,role:'buyer',phone:bphone.value,password:bpass.value})});if(d.activationRequired){let code=prompt('Enter the 6-digit activation code sent by SMS/WhatsApp (demo fallback shows it here):',d.activationCode); if(code){let a=await api('activate',{method:'POST',body:JSON.stringify({phone:bphone.value,role:'buyer',code})});me=a.user;localStorage.me=JSON.stringify(me);renderBuyer();}}else{me=d.user;localStorage.me=JSON.stringify(me);renderBuyer();alert('Logged in');}}catch(e){alert(e.message)}}
-async function sellerRegister(){try{let d=await api('auth',{method:'POST',body:JSON.stringify({action:'register',role:'seller',phone:sphone.value,password:spass.value,businessName:sname.value,email:semail.value,bankName:sbank.value,bankCode:sbankcode.value,accountNumber:sacct.value})});let code=prompt('Enter the 6-digit activation code sent by SMS/WhatsApp (demo fallback shows it here):',d.activationCode); if(code){let a=await api('activate',{method:'POST',body:JSON.stringify({phone:sphone.value,role:'seller',code})});me=a.user; try{await fetch('/api/paystack-subaccount',{method:'POST',headers:{'Content-Type':'application/json','x-user-phone':me.phone},body:JSON.stringify({sellerId:me.id,bankCode:sbankcode.value})})}catch(e){} } if(d.user&&!me){me=d.user;localStorage.me=JSON.stringify(me)}renderSeller()}catch(e){alert(e.message)}}
-async function sellerLogin(){try{let d=await api('auth',{method:'POST',body:JSON.stringify({action:'login',role:'seller',phone:sphone.value,password:spass.value})});me=d.user;localStorage.me=JSON.stringify(me);renderSeller();alert('Business login successful')}catch(e){alert(e.message)}}
-async function renderBuyer(){if(!me||me.role!=='buyer'){buyerForm.classList.remove('hidden');buyerLogged.classList.add('hidden');return}buyerForm.classList.add('hidden');buyerLogged.classList.remove('hidden');buyerLogged.innerHTML='<h3>Welcome back</h3><p>'+esc(me.phone)+'</p><button class="btn" onclick="show(\'shop\')">Start shopping</button><div id="buyerOrders" class="panel"></div>';try{let d=await api('orders?mine=true');buyerOrders.innerHTML='<h3>My orders</h3>'+((d.orders||[]).length?'<table><tr><th>Reference</th><th>Amount</th><th>Status</th></tr>'+d.orders.map(o=>`<tr><td>${esc(o.reference)}</td><td>${money(o.amount)}</td><td>${esc(o.status)}</td></tr>`).join('')+'</table>':'<p class="muted">No orders yet.</p>')}catch(e){buyerOrders.innerHTML='<p class="muted">Could not load orders.</p>'}}
-async function renderSeller(){if(!me||me.role!=='seller'){sellerDash.classList.add('hidden');return}sellerDash.classList.remove('hidden');sellerDash.innerHTML='<h2>'+esc(me.businessName||'Business dashboard')+'</h2><p class="muted">Add products and monitor sales.</p><div class="row"><button class="btn" onclick="productForm()">Upload product</button><button class="btn gray" onclick="sellerOrders()">My orders</button><button class="btn gray" onclick="promotionForm()">Promote a product</button></div><div id="sellerArea"></div>';await sellerOrders()}
-function productForm(){sellerArea.innerHTML='<div class="panel"><h3>Upload product</h3><div class="field"><label>Name</label><input id="pn"></div><div class="field"><label>Price (NGN)</label><input id="pp" type="number" min="1"></div><div class="field"><label>Category</label><input id="pc"></div><div class="field"><label>Description</label><textarea id="pd"></textarea></div><div class="field"><label>Product image</label><input id="pif" type="file" accept="image/*"></div><button class="btn" onclick="addProduct()">Publish product</button></div>'}
-async function addProduct(){try{let image='';if(pif.files[0]){if(pif.files[0].size>1500000)throw new Error('Please keep product images below 1.5MB');image=await new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(pif.files[0])})}await api('products',{method:'POST',body:JSON.stringify({name:pn.value,price:Number(pp.value),category:pc.value,description:pd.value,image})});alert('Product published');await loadProducts();sellerOrders()}catch(e){alert(e.message)}}
-async function sellerOrders(){try{let d=await api('orders?mine=true');sellerArea.innerHTML='<h3>Orders & earnings</h3>'+((d.orders||[]).length?'<table><tr><th>Reference</th><th>Amount</th><th>Status</th><th>Your earnings</th></tr>'+d.orders.map(o=>`<tr><td>${o.reference}</td><td>${money(o.amount)}</td><td>${o.status}</td><td>${money(o.vendorAmount)}</td></tr>`).join('')+'</table>':'<p class="muted">No orders yet.</p>')}catch(e){sellerArea.innerHTML='<p class="error">Could not load orders.</p>'}}
-function promotionForm(){sellerArea.innerHTML='<div class="panel"><h3>Promotion service</h3><p>Promote a product for <b>2%</b> of the promoted transaction value, in addition to the standard 5% marketplace commission.</p><div class="field"><label>Product ID</label><input id="promoPid"></div><div class="field"><label>Promotion days</label><select id="promoDays"><option>7</option><option>14</option><option>30</option></select></div><button class="btn" onclick="promote()">Request promotion</button></div>'}
-async function promote(){try{let d=await api('promotions',{method:'POST',body:JSON.stringify({productId:promoPid.value,days:Number(promoDays.value)})});alert(d.message)}catch(e){alert(e.message)}}
-async function buy(id){if(!me||me.role!=='buyer'){show('account');alert('Please create/login to a buyer account first.');return}let p=products.find(x=>x.id===id);let email=prompt('Enter email for your payment receipt (optional):','');alert('Checkout supports the payment methods enabled on SALGA: Card, Bank, Bank Transfer, USSD and PayAttitude. OPay and PalmPay appear under Bank when enabled on the Paystack merchant account.');try{let d=await api('payments',{method:'POST',body:JSON.stringify({action:'initialize',productId:id,email:email||undefined,promoted:!!p.promoted})});location.href=d.authorization_url}catch(e){alert(e.message)}}
-async function adminLogin(){try{let d=await api('admin',{method:'POST',body:JSON.stringify({action:'login',email:apassEmail.value,password:apass.value})});if(d.token){localStorage.adminToken=d.token;loadAdmin()}}catch(e){msg(adminMsg,e.message)}}
-async function loadAdmin(){try{let d=await api('admin?view=dashboard',{headers:{Authorization:'Bearer '+localStorage.adminToken}});adminDash.classList.remove('hidden');adminDash.innerHTML=`<div class="grid"><div class="card"><div class="muted">Users</div><div class="stat">${d.stats.users}</div></div><div class="card"><div class="muted">Businesses</div><div class="stat">${d.stats.sellers}</div></div><div class="card"><div class="muted">Orders</div><div class="stat">${d.stats.orders}</div></div><div class="card"><div class="muted">Revenue</div><div class="stat">${money(d.stats.revenue)}</div></div><div class="card"><div class="muted">5% commissions</div><div class="stat">${money(d.stats.commissions)}</div></div><div class="card"><div class="muted">2% promotion fees</div><div class="stat">${money(d.stats.promotionFees)}</div></div></div><div class="panel"><h3>Users</h3>${tableUsers(d.users)}</div><div class="panel"><h3>Orders</h3>${tableOrders(d.orders)}</div><div class="panel"><h3>Promotion requests</h3>${tablePromos(d.promotions)}</div>`}catch(e){alert(e.message)}}
-function tableUsers(a){return '<table><tr><th>Phone</th><th>Role</th><th>Business</th><th>Status</th></tr>'+a.map(x=>`<tr><td>${esc(x.phone)}</td><td>${x.role}</td><td>${esc(x.businessName||'')}</td><td>${x.status}</td></tr>`).join('')+'</table>'}
-function tableOrders(a){return '<table><tr><th>Reference</th><th>Amount</th><th>Status</th><th>Commission</th></tr>'+a.map(x=>`<tr><td>${x.reference}</td><td>${money(x.amount)}</td><td>${x.status}</td><td>${money(x.commission)}</td></tr>`).join('')+'</table>'}
-function tablePromos(a){return '<table><tr><th>Product</th><th>Seller</th><th>Days</th><th>Status</th></tr>'+a.map(x=>`<tr><td>${esc(x.productId)}</td><td>${esc(x.sellerId)}</td><td>${x.days}</td><td>${x.status}</td></tr>`).join('')+'</table>'}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-async function askCare(){let text=careInput.value.trim();if(!text)return;careChat.innerHTML+='<p><b>You:</b> '+esc(text)+'</p><p><b>SALGA Customer Care:</b> <span id="careWait">Typing…</span></p>';careInput.value='';careChat.scrollTop=careChat.scrollHeight;try{let d=await api('customer-care',{method:'POST',body:JSON.stringify({message:text})});document.getElementById('careWait').textContent=d.reply||'Please contact the administrator.'}catch(e){document.getElementById('careWait').textContent='Please contact SALGA support. '+e.message}}
-function logout(){me=null;localStorage.removeItem('me');localStorage.removeItem('adminToken');location.reload()}
-try{me=JSON.parse(localStorage.me||'null')}catch{} const paymentRef=new URLSearchParams(location.search).get('payment_ref'); if(paymentRef){api('verify?reference='+encodeURIComponent(paymentRef)).then(d=>alert('Payment status: '+d.status)).catch(e=>alert(e.message)); history.replaceState({},'',location.pathname)} loadProducts();renderBuyer();renderSeller();
+
+let me = null;
+let session = null;
+let products = [];
+
+const money = n =>
+  '₦' +
+  Number(n || 0).toLocaleString(
+    'en-NG',
+    {
+      maximumFractionDigits:2
+    }
+  );
+
+
+function show(id){
+
+  document
+    .querySelectorAll('main>section')
+    .forEach(x =>
+      x.classList.add('hidden')
+    );
+
+  document
+    .getElementById(id)
+    .classList.remove('hidden');
+
+  if(id === 'shop')
+    loadProducts();
+
+  if(id === 'seller')
+    renderSeller();
+
+  if(id === 'account')
+    renderBuyer();
+}
+
+
+function msg(el,text,ok=false){
+
+  el.innerHTML =
+    '<div class="notice ' +
+    (ok ? 'success' : 'error') +
+    '">' +
+    esc(text) +
+    '</div>';
+}
+
+
+/*
+ * All API calls now send the real
+ * Supabase access token.
+ */
+async function api(path,opts={}){
+
+  const headers = {
+    "Content-Type":
+      "application/json"
+  };
+
+  if(session?.access_token){
+
+    headers.Authorization =
+      "Bearer " +
+      session.access_token;
+  }
+
+  if(localStorage.adminToken){
+
+    headers.Authorization =
+      "Bearer " +
+      localStorage.adminToken;
+  }
+
+  const response =
+    await fetch(
+      "/api/" + path,
+      {
+        ...opts,
+        headers:{
+          ...headers,
+          ...(opts.headers || {})
+        }
+      }
+    );
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({
+        error:"Invalid server response"
+      }));
+
+  if(!response.ok)
+    throw new Error(
+      data.error ||
+      "Request failed"
+    );
+
+  return data;
+}
+
+
+/*
+ * Load approved products.
+ */
+async function loadProducts(){
+
+  const container =
+    document.getElementById(
+      "products"
+    );
+
+  if(!container)
+    return;
+
+  try{
+
+    const data =
+      await api("products");
+
+    products =
+      data.products || [];
+
+    const search =
+      (
+        document
+          .getElementById("search")
+          ?.value || ""
+      ).toLowerCase();
+
+    const category =
+      document
+        .getElementById("category")
+        ?.value || "";
+
+    const filtered =
+      products.filter(p => {
+
+        const text =
+          `${p.name || ""} ${
+            p.description || ""
+          } ${
+            p.category || ""
+          }`.toLowerCase();
+
+        return (
+          (!search ||
+            text.includes(search)) &&
+          (!category ||
+            p.category === category)
+        );
+
+      });
+
+    if(!filtered.length){
+
+      container.innerHTML =
+        '<div class="panel">' +
+        'No products found yet.' +
+        '</div>';
+
+      return;
+    }
+
+    container.innerHTML =
+      filtered.map(p => {
+
+        const image =
+          p.image_url ||
+          p.image ||
+          "https://placehold.co/600x400?text=SALGA";
+
+        const businessName =
+          p.businesses?.business_name ||
+          p.businessName ||
+          "";
+
+        return `
+          <div class="card product">
+
+            <img
+              src="${esc(image)}"
+              onerror="this.src='https://placehold.co/600x400?text=SALGA'">
+
+            <span class="tag">
+              ${esc(p.category || "Other")}
+            </span>
+
+            <h3>
+              ${esc(p.name)}
+            </h3>
+
+            <p class="muted">
+              ${esc(p.description || "")}
+            </p>
+
+            <div class="price">
+              ${money(p.price)}
+            </div>
+
+            <p class="muted">
+              Seller:
+              ${esc(businessName)}
+            </p>
+
+            <button
+              class="btn"
+              onclick="buy('${esc(p.id)}')">
+              Buy now
+            </button>
+
+          </div>
+        `;
+
+      }).join("");
+
+  }catch(error){
+
+    container.innerHTML =
+      '<div class="panel error">' +
+      esc(error.message) +
+      '</div>';
+  }
+}
+
+
+/*
+ * BUYER AUTHENTICATION
+ */
+async function auth(mode){
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            action:mode,
+            role:"buyer",
+            phone:
+              bphone.value.trim(),
+            password:
+              bpass.value
+          })
+        }
+      );
+
+    me = data.user;
+    session = data.session;
+
+    localStorage.me =
+      JSON.stringify(me);
+
+    localStorage.session =
+      JSON.stringify(session);
+
+    renderBuyer();
+
+    updateHeader();
+
+    alert(
+      mode === "register"
+        ? "Buyer account created successfully."
+        : "Logged in successfully."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/*
+ * SELLER REGISTRATION
+ */
+async function sellerRegister(){
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"register",
+
+            role:"seller",
+
+            phone:
+              sphone.value.trim(),
+
+            password:
+              spass.value,
+
+            businessName:
+              sname.value.trim(),
+
+            email:
+              semail.value.trim(),
+
+            bankName:
+              sbank.value.trim(),
+
+            bankCode:
+              sbankcode.value.trim(),
+
+            accountNumber:
+              sacct.value.trim()
+
+          })
+        }
+      );
+
+    me = data.user;
+    session = data.session;
+
+    localStorage.me =
+      JSON.stringify(me);
+
+    localStorage.session =
+      JSON.stringify(session);
+
+    updateHeader();
+
+    renderSeller();
+
+    alert(
+      "Business account created successfully."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/*
+ * SELLER LOGIN
+ */
+async function sellerLogin(){
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"login",
+
+            role:"seller",
+
+            phone:
+              sphone.value.trim(),
+
+            password:
+              spass.value
+
+          })
+        }
+      );
+
+    me = data.user;
+    session = data.session;
+
+    localStorage.me =
+      JSON.stringify(me);
+
+    localStorage.session =
+      JSON.stringify(session);
+
+    updateHeader();
+
+    renderSeller();
+
+    alert(
+      "Business login successful."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/*
+ * BUYER DASHBOARD
+ */
+async function renderBuyer(){
+
+  if(
+    !me ||
+    me.role !== "buyer"
+  ){
+
+    buyerForm
+      .classList
+      .remove("hidden");
+
+    buyerLogged
+      .classList
+      .add("hidden");
+
+    return;
+  }
+
+  buyerForm
+    .classList
+    .add("hidden");
+
+  buyerLogged
+    .classList
+    .remove("hidden");
+
+  buyerLogged.innerHTML = `
+
+    <h3>
+      Welcome back
+    </h3>
+
+    <p>
+      ${esc(me.phone || "")}
+    </p>
+
+    <button
+      class="btn"
+      onclick="show('shop')">
+      Start shopping
+    </button>
+
+    <div
+      id="buyerOrders"
+      class="panel">
+      <p class="muted">
+        Your orders will appear here.
+      </p>
+    </div>
+  `;
+
+  /*
+   * The current orders endpoint is being
+   * migrated to Supabase authentication.
+   * Don't prevent the buyer dashboard from
+   * opening if orders are unavailable.
+   */
+}
+
+
+/*
+ * SELLER DASHBOARD
+ */
+async function renderSeller(){
+
+  if(
+    !me ||
+    me.role !== "seller"
+  ){
+
+    sellerDash
+      .classList
+      .add("hidden");
+
+    return;
+  }
+
+  sellerDash
+    .classList
+    .remove("hidden");
+
+  sellerDash.innerHTML = `
+
+    <h2>
+      ${esc(
+        me.full_name ||
+        "Business dashboard"
+      )}
+    </h2>
+
+    <p class="muted">
+      Manage your business and products.
+    </p>
+
+    <div class="row">
+
+      <button
+        class="btn"
+        onclick="productForm()">
+        Upload product
+      </button>
+
+      <button
+        class="btn gray"
+        onclick="sellerOrders()">
+        My orders
+      </button>
+
+      <button
+        class="btn gray"
+        onclick="promotionForm()">
+        Promote a product
+      </button>
+
+    </div>
+
+    <div id="sellerArea"></div>
+  `;
+
+  productForm();
+}
+
+
+/*
+ * PRODUCT FORM
+ */
+function productForm(){
+
+  sellerArea.innerHTML = `
+
+    <div class="panel">
+
+      <h3>
+        Upload product
+      </h3>
+
+      <div class="field">
+        <label>Name</label>
+        <input id="pn">
+      </div>
+
+      <div class="field">
+        <label>Price (NGN)</label>
+        <input
+          id="pp"
+          type="number"
+          min="1">
+      </div>
+
+      <div class="field">
+        <label>Category</label>
+        <input id="pc">
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea id="pd"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Product image</label>
+        <input
+          id="pif"
+          type="file"
+          accept="image/*">
+      </div>
+
+      <button
+        class="btn"
+        onclick="addProduct()">
+        Submit product
+      </button>
+
+      <p class="muted">
+        New products require admin approval
+        before appearing publicly.
+      </p>
+
+    </div>
+  `;
+}
+
+
+/*
+ * ADD PRODUCT
+ */
+async function addProduct(){
+
+  try{
+
+    let image = "";
+
+    if(pif.files[0]){
+
+      if(
+        pif.files[0].size >
+        1500000
+      ){
+        throw new Error(
+          "Please keep product images below 1.5MB."
+        );
+      }
+
+      image =
+        await new Promise(
+          (resolve,reject) => {
+
+            const reader =
+              new FileReader();
+
+            reader.onload =
+              () =>
+                resolve(
+                  reader.result
+                );
+
+            reader.onerror =
+              reject;
+
+            reader.readAsDataURL(
+              pif.files[0]
+            );
+          }
+        );
+    }
+
+    await api(
+      "products",
+      {
+        method:"POST",
+        body:JSON.stringify({
+
+          name:
+            pn.value.trim(),
+
+          price:
+            Number(pp.value),
+
+          category:
+            pc.value.trim(),
+
+          description:
+            pd.value.trim(),
+
+          image
+
+        })
+      }
+    );
+
+    alert(
+      "Product submitted successfully. It is awaiting admin approval."
+    );
+
+    await loadProducts();
+
+    productForm();
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/*
+ * SELLER ORDERS
+ */
+async function sellerOrders(){
+
+  sellerArea.innerHTML = `
+    <div class="panel">
+      <h3>Orders & earnings</h3>
+      <p class="muted">
+        Order dashboard will load after the
+        Supabase orders endpoint is migrated.
+      </p>
+    </div>
+  `;
+}
+
+
+/*
+ * PROMOTION
+ */
+function promotionForm(){
+
+  sellerArea.innerHTML = `
+
+    <div class="panel">
+
+      <h3>
+        Promotion service
+      </h3>
+
+      <p>
+        Promote a product for
+        <b>2%</b> of the promoted
+        transaction value, in addition
+        to the standard 5% marketplace
+        commission.
+      </p>
+
+      <div class="field">
+        <label>
+          Product ID
+        </label>
+
+        <input id="promoPid">
+      </div>
+
+      <div class="field">
+
+        <label>
+          Promotion days
+        </label>
+
+        <select id="promoDays">
+
+          <option value="7">
+            7
+          </option>
+
+          <option value="14">
+            14
+          </option>
+
+          <option value="30">
+            30
+          </option>
+
+        </select>
+
+      </div>
+
+      <button
+        class="btn"
+        onclick="promote()">
+        Request promotion
+      </button>
+
+    </div>
+  `;
+}
+
+
+async function promote(){
+
+  try{
+
+    const data =
+      await api(
+        "promotions",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            productId:
+              promoPid.value.trim(),
+
+            days:
+              Number(
+                promoDays.value
+              )
+
+          })
+        }
+      );
+
+    alert(
+      data.message ||
+      "Promotion request submitted."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/*
+ * REAL PAYSTACK CHECKOUT
+ */
+async function buy(productId){
+
+  if(
+    !me ||
+    me.role !== "buyer"
+  ){
+
+    show("account");
+
+    alert(
+      "Please create or log in to a buyer account first."
+    );
+
+    return;
+  }
+
+  const product =
+    products.find(
+      p => String(p.id) ===
+        String(productId)
+    );
+
+  if(!product){
+
+    alert(
+      "Product could not be found."
+    );
+
+    return;
+  }
+
+  const email =
+    prompt(
+      "Enter your email for your payment receipt:",
+      ""
+    );
+
+  try{
+
+    const data =
+      await api(
+        "payments",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:
+              "initialize",
+
+            productId:
+              productId,
+
+            quantity:1,
+
+            email:
+              email ||
+              undefined
+
+          })
+        }
+      );
+
+    if(
+      !data.authorization_url
+    ){
+      throw new Error(
+        "Paystack did not return a checkout link."
+      );
+    }
+
+    /*
+     * Send customer to real Paystack checkout.
+     */
+    window.location.href =
+      data.authorization_url;
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+  }
+}
+
+
+/*
+ * PAYSTACK RETURN / VERIFICATION
+ */
+async function verifyPayment(reference){
+
+  if(!reference)
+    return;
+
+  try{
+
+    const data =
+      await api(
+        "payments",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:
+              "verify",
+
+            reference
+
+          })
+        }
+      );
+
+    if(
+      data.success &&
+      data.status === "success"
+    ){
+
+      alert(
+        "Payment successful. Your order has been confirmed."
+      );
+
+    }else{
+
+      alert(
+        "Payment could not be confirmed yet."
+      );
+    }
+
+  }catch(error){
+
+    alert(
+      "Payment verification failed: " +
+      error.message
+    );
+  }
+
+  /*
+   * Remove payment_ref from address bar.
+   */
+  history.replaceState(
+    {},
+    document.title,
+    window.location.pathname
+  );
+}
+
+
+/*
+ * ADMIN LOGIN
+ */
+async function adminLogin(){
+
+  try{
+
+    const data =
+      await api(
+        "admin",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"login",
+
+            email:
+              apassEmail.value.trim(),
+
+            password:
+              apass.value
+
+          })
+        }
+      );
+
+    if(data.token){
+
+      localStorage.adminToken =
+        data.token;
+
+      loadAdmin();
+    }
+
+  }catch(error){
+
+    msg(
+      adminMsg,
+      error.message
+    );
+  }
+}
+
+
+/*
+ * ADMIN DASHBOARD
+ */
+async function loadAdmin(){
+
+  try{
+
+    const data =
+      await api(
+        "admin?view=dashboard"
+      );
+
+    adminDash
+      .classList
+      .remove("hidden");
+
+    adminDash.innerHTML = `
+
+      <div class="grid">
+
+        <div class="card">
+          <div class="muted">
+            Users
+          </div>
+          <div class="stat">
+            ${data.stats?.users || 0}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            Businesses
+          </div>
+          <div class="stat">
+            ${data.stats?.sellers || 0}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            Orders
+          </div>
+          <div class="stat">
+            ${data.stats?.orders || 0}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            Revenue
+          </div>
+          <div class="stat">
+            ${money(
+              data.stats?.revenue || 0
+            )}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            5% commissions
+          </div>
+          <div class="stat">
+            ${money(
+              data.stats?.commissions || 0
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel">
+
+        <h3>
+          Users
+        </h3>
+
+        ${
+          tableUsers(
+            data.users || []
+          )
+        }
+
+      </div>
+
+      <div class="panel">
+
+        <h3>
+          Orders
+        </h3>
+
+        ${
+          tableOrders(
+            data.orders || []
+          )
+        }
+
+      </div>
+
+      <div class="panel">
+
+        <h3>
+          Promotion requests
+        </h3>
+
+        ${
+          tablePromos(
+            data.promotions || []
+          )
+        }
+
+      </div>
+    `;
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+  }
+}
+
+
+function tableUsers(a){
+
+  return `
+    <table>
+
+      <tr>
+        <th>Phone</th>
+        <th>Role</th>
+        <th>Name</th>
+      </tr>
+
+      ${
+        a.map(x => `
+          <tr>
+
+            <td>
+              ${esc(x.phone || "")}
+            </td>
+
+            <td>
+              ${esc(x.role || "")}
+            </td>
+
+            <td>
+              ${esc(
+                x.businessName ||
+                x.full_name ||
+                ""
+              )}
+            </td>
+
+          </tr>
+        `).join("")
+      }
+
+    </table>
+  `;
+}
+
+
+function tableOrders(a){
+
+  return `
+    <table>
+
+      <tr>
+        <th>Reference</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Commission</th>
+      </tr>
+
+      ${
+        a.map(x => `
+          <tr>
+
+            <td>
+              ${esc(
+                x.reference || ""
+              )}
+            </td>
+
+            <td>
+              ${money(
+                x.amount || 0
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                x.status || ""
+              )}
+            </td>
+
+            <td>
+              ${money(
+                x.commission || 0
+              )}
+            </td>
+
+          </tr>
+        `).join("")
+      }
+
+    </table>
+  `;
+}
+
+
+function tablePromos(a){
+
+  return `
+    <table>
+
+      <tr>
+        <th>Product</th>
+        <th>Seller</th>
+        <th>Days</th>
+        <th>Status</th>
+      </tr>
+
+      ${
+        a.map(x => `
+          <tr>
+
+            <td>
+              ${esc(
+                x.productId || ""
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                x.sellerId || ""
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                x.days || ""
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                x.status || ""
+              )}
+            </td>
+
+          </tr>
+        `).join("")
+      }
+
+    </table>
+  `;
+}
+
+
+/*
+ * CUSTOMER CARE
+ */
+async function askCare(){
+
+  const text =
+    careInput.value.trim();
+
+  if(!text)
+    return;
+
+  careChat.innerHTML +=
+    '<p><b>You:</b> ' +
+    esc(text) +
+    '</p>' +
+    '<p><b>SALGA Customer Care:</b> ' +
+    '<span id="careWait">Typing…</span>' +
+    '</p>';
+
+  careInput.value = "";
+
+  careChat.scrollTop =
+    careChat.scrollHeight;
+
+  try{
+
+    const data =
+      await api(
+        "customer-care",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            message:text
+          })
+        }
+      );
+
+    const wait =
+      document.getElementById(
+        "careWait"
+      );
+
+    if(wait){
+
+      wait.textContent =
+        data.reply ||
+        "Please contact SALGA support.";
+    }
+
+  }catch(error){
+
+    const wait =
+      document.getElementById(
+        "careWait"
+      );
+
+    if(wait){
+
+      wait.textContent =
+        "Please contact SALGA support. " +
+        error.message;
+    }
+  }
+}
+
+
+/*
+ * LOGOUT
+ */
+function logout(){
+
+  me = null;
+  session = null;
+
+  localStorage.removeItem(
+    "me"
+  );
+
+  localStorage.removeItem(
+    "session"
+  );
+
+  localStorage.removeItem(
+    "adminToken"
+  );
+
+  location.reload();
+}
+
+
+/*
+ * HEADER STATE
+ */
+function updateHeader(){
+
+  const button =
+    document.getElementById(
+      "logout"
+    );
+
+  if(
+    me &&
+    session
+  ){
+
+    button.classList.remove(
+      "hidden"
+    );
+
+  }else{
+
+    button.classList.add(
+      "hidden"
+    );
+  }
+}
+
+
+/*
+ * HTML escaping
+ */
+function esc(value){
+
+  return String(
+    value ?? ""
+  ).replace(
+    /[&<>"']/g,
+    char => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[char])
+  );
+}
+
+
+/*
+ * RESTORE LOGIN
+ */
+try{
+
+  me =
+    JSON.parse(
+      localStorage.me ||
+      "null"
+    );
+
+  session =
+    JSON.parse(
+      localStorage.session ||
+      "null"
+    );
+
+}catch(error){
+
+  me = null;
+  session = null;
+}
+
+
+/*
+ * CHECK PAYSTACK RETURN
+ */
+const paymentRef =
+  new URLSearchParams(
+    window.location.search
+  ).get(
+    "payment_ref"
+  );
+
+if(paymentRef){
+
+  verifyPayment(
+    paymentRef
+  );
+}
+
+
+/*
+ * INITIAL PAGE
+ */
+updateHeader();
+loadProducts();
+renderBuyer();
+renderSeller();
+
 </script>
-</body></html>
+
+</body>
+</html>

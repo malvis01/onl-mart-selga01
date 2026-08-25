@@ -1,24 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = Netlify.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Netlify.env.get(
-  "SUPABASE_SERVICE_ROLE_KEY"
-);
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Supabase environment variables are not configured.");
-}
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +26,7 @@ function json(data, status = 200) {
 }
 
 export default async function handler(req) {
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers });
   }
@@ -53,24 +38,49 @@ export default async function handler(req) {
     );
   }
 
+  if (!SUPABASE_URL) {
+    return json(
+      { error: "SUPABASE_URL is not configured in Netlify." },
+      500
+    );
+  }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return json(
+      {
+        error:
+          "SUPABASE_SERVICE_ROLE_KEY is not configured in Netlify."
+      },
+      500
+    );
+  }
+
+  const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+
   try {
+
     const body = await req.json();
 
-    const action = String(
-      body.action || "login"
-    );
+    const action =
+      String(body.action || "login").trim();
 
-    const role = String(
-      body.role || ""
-    );
+    const role =
+      String(body.role || "").trim();
 
-    const phone = String(
-      body.phone || ""
-    ).trim();
+    const phone =
+      String(body.phone || "").trim();
 
-    const password = String(
-      body.password || ""
-    );
+    const password =
+      String(body.password || "");
 
     if (
       !phone ||
@@ -87,29 +97,49 @@ export default async function handler(req) {
     }
 
     /*
-     * Supabase Auth uses email internally.
-     * Users still register/login with their phone.
+     * Phone numbers are converted to an internal
+     * email address for Supabase Auth.
+     *
+     * The customer still uses ONLY their phone
+     * number when registering and logging in.
      */
-    const cleanPhone = phone.replace(
-      /\D/g,
-      ""
-    );
+    const cleanPhone =
+      phone.replace(/\D/g, "");
 
     const authEmail =
       `${cleanPhone}@users.salgadigitalmart.local`;
 
     /*
-     * =========================
+     * ==========================================
      * REGISTER
-     * =========================
+     * ==========================================
      */
     if (action === "register") {
 
+      /*
+       * Seller-required information.
+       */
       if (role === "seller") {
+
+        const businessName =
+          String(
+            body.businessName || ""
+          ).trim();
+
+        const bankName =
+          String(
+            body.bankName || ""
+          ).trim();
+
+        const accountNumber =
+          String(
+            body.accountNumber || ""
+          ).trim();
+
         if (
-          !String(body.businessName || "").trim() ||
-          !String(body.bankName || "").trim() ||
-          !String(body.accountNumber || "").trim()
+          !businessName ||
+          !bankName ||
+          !accountNumber
         ) {
           return json(
             {
@@ -122,7 +152,7 @@ export default async function handler(req) {
       }
 
       /*
-       * Check existing profile.
+       * Check whether phone number already exists.
        */
       const {
         data: existing,
@@ -134,6 +164,7 @@ export default async function handler(req) {
         .maybeSingle();
 
       if (existingError) {
+
         console.error(
           "PROFILE CHECK ERROR:",
           existingError
@@ -142,13 +173,14 @@ export default async function handler(req) {
         return json(
           {
             error:
-              "Unable to check account. Please try again."
+              "Unable to check the account. Please try again."
           },
           500
         );
       }
 
       if (existing) {
+
         return json(
           {
             error:
@@ -159,30 +191,34 @@ export default async function handler(req) {
       }
 
       /*
-       * Create Supabase Auth account.
+       * Create the real Supabase Auth account.
        */
       const {
         data: authData,
         error: authError
-      } = await supabase.auth.admin.createUser({
-        email: authEmail,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          phone,
-          role,
-          full_name:
-            role === "seller"
-              ? String(
-                  body.businessName || ""
-                ).trim()
-              : ""
-        }
-      });
+      } =
+        await supabase.auth.admin.createUser({
+          email: authEmail,
+          password,
+          email_confirm: true,
+
+          user_metadata: {
+            phone,
+            role,
+
+            full_name:
+              role === "seller"
+                ? String(
+                    body.businessName || ""
+                  ).trim()
+                : ""
+          }
+        });
 
       if (authError) {
+
         console.error(
-          "AUTH CREATE ERROR:",
+          "SUPABASE AUTH CREATE ERROR:",
           authError
         );
 
@@ -195,36 +231,44 @@ export default async function handler(req) {
         );
       }
 
-      const user = authData.user;
+      const user =
+        authData.user;
 
       /*
-       * Create profile.
+       * Create the application profile.
        */
       const {
         data: profile,
         error: profileError
-      } = await supabase
-        .from("profiles")
-        .insert({
-          id: user.id,
-          phone,
-          role,
-          full_name:
-            role === "seller"
-              ? String(
-                  body.businessName || ""
-                ).trim()
-              : ""
-        })
-        .select()
-        .single();
+      } =
+        await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            phone,
+            role,
+
+            full_name:
+              role === "seller"
+                ? String(
+                    body.businessName || ""
+                  ).trim()
+                : ""
+          })
+          .select()
+          .single();
 
       if (profileError) {
+
         console.error(
           "PROFILE CREATE ERROR:",
           profileError
         );
 
+        /*
+         * Remove Auth user if profile creation
+         * failed so we don't leave a broken account.
+         */
         await supabase.auth.admin.deleteUser(
           user.id
         );
@@ -239,36 +283,45 @@ export default async function handler(req) {
       }
 
       /*
-       * Seller business record.
+       * Create seller business record.
        */
       if (role === "seller") {
 
         const {
           error: businessError
-        } = await supabase
-          .from("businesses")
-          .insert({
-            owner_id: user.id,
-            business_name:
-              String(
-                body.businessName
-              ).trim(),
-            status: "active",
-            bank_name:
-              String(
-                body.bankName || ""
-              ).trim(),
-            bank_code:
-              String(
-                body.bankCode || ""
-              ).trim(),
-            account_number:
-              String(
-                body.accountNumber || ""
-              ).trim()
-          });
+        } =
+          await supabase
+            .from("businesses")
+            .insert({
+              owner_id:
+                user.id,
+
+              business_name:
+                String(
+                  body.businessName
+                ).trim(),
+
+              status:
+                "active",
+
+              bank_name:
+                String(
+                  body.bankName || ""
+                ).trim(),
+
+              bank_code:
+                String(
+                  body.bankCode || ""
+                ).trim(),
+
+              account_number:
+                String(
+                  body.accountNumber || ""
+                ).trim()
+            });
 
         if (businessError) {
+
           console.error(
             "BUSINESS CREATE ERROR:",
             businessError
@@ -289,17 +342,19 @@ export default async function handler(req) {
       }
 
       /*
-       * Log the new user in.
+       * Automatically log the new account in.
        */
       const {
         data: loginData,
         error: loginError
-      } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password
-      });
+      } =
+        await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password
+        });
 
       if (loginError) {
+
         console.error(
           "AUTO LOGIN ERROR:",
           loginError
@@ -307,8 +362,18 @@ export default async function handler(req) {
 
         return json(
           {
-            error:
-              "Account was created, but automatic login failed. Please log in."
+            success: true,
+
+            message:
+              "Account created successfully. Please log in.",
+
+            user: {
+              id: user.id,
+              phone,
+              role,
+              full_name:
+                profile.full_name || ""
+            }
           },
           201
         );
@@ -316,8 +381,10 @@ export default async function handler(req) {
 
       return json({
         success: true,
+
         message:
           "Account created successfully.",
+
         user: {
           id: user.id,
           phone,
@@ -325,26 +392,34 @@ export default async function handler(req) {
           full_name:
             profile.full_name || ""
         },
+
         session:
           loginData.session
       });
     }
 
     /*
-     * =========================
+     * ==========================================
      * LOGIN
-     * =========================
+     * ==========================================
      */
 
     const {
       data: loginData,
       error: loginError
-    } = await supabase.auth.signInWithPassword({
-      email: authEmail,
-      password
-    });
+    } =
+      await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password
+      });
 
     if (loginError) {
+
+      console.error(
+        "LOGIN ERROR:",
+        loginError
+      );
+
       return json(
         {
           error:
@@ -357,16 +432,24 @@ export default async function handler(req) {
     const authUser =
       loginData.user;
 
+    /*
+     * Get application profile.
+     */
     const {
       data: profile,
       error: profileError
-    } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .single();
+    } =
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single();
 
-    if (profileError || !profile) {
+    if (
+      profileError ||
+      !profile
+    ) {
+
       return json(
         {
           error:
@@ -376,7 +459,12 @@ export default async function handler(req) {
       );
     }
 
+    /*
+     * Make sure buyer/seller selected on the
+     * website matches the actual account role.
+     */
     if (profile.role !== role) {
+
       return json(
         {
           error:
@@ -388,15 +476,24 @@ export default async function handler(req) {
 
     return json({
       success: true,
+
+      message:
+        "Login successful.",
+
       user: {
-        id: authUser.id,
+        id:
+          authUser.id,
+
         phone:
           profile.phone || phone,
+
         role:
           profile.role,
+
         full_name:
           profile.full_name || ""
       },
+
       session:
         loginData.session
     });

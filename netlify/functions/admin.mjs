@@ -1,10 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY;
+/* =========================================================
+   ENVIRONMENT
+========================================================= */
 
-const ADMIN_EMAIL = "malvisdabz@gmail.com";
+const SUPABASE_URL =
+  Netlify.env.get("SUPABASE_URL");
+
+const SUPABASE_SERVICE_ROLE_KEY =
+  Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+const ADMIN_EMAIL =
+  "malvisdabz@gmail.com";
+
+/* =========================================================
+   HEADERS
+========================================================= */
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -14,31 +25,66 @@ const headers = {
     "POST, OPTIONS"
 };
 
+/* =========================================================
+   JSON RESPONSE
+========================================================= */
+
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      ...headers,
-      "Content-Type": "application/json"
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers: {
+        ...headers,
+        "Content-Type":
+          "application/json"
+      }
     }
-  });
+  );
 }
 
+/* =========================================================
+   ADMIN FUNCTION
+========================================================= */
+
 export default async function handler(req) {
+
+  /* -------------------------------------------------------
+     CORS
+  ------------------------------------------------------- */
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers });
+    return new Response(
+      "ok",
+      { headers }
+    );
   }
+
+  /* -------------------------------------------------------
+     METHOD
+  ------------------------------------------------------- */
 
   if (req.method !== "POST") {
     return json(
-      { error: "Method not allowed" },
+      {
+        success: false,
+        error: "Method not allowed."
+      },
       405
     );
   }
 
+  /* -------------------------------------------------------
+     ENVIRONMENT CHECK
+  ------------------------------------------------------- */
+
   if (!SUPABASE_URL) {
     return json(
-      { error: "SUPABASE_URL is not configured." },
+      {
+        success: false,
+        error:
+          "SUPABASE_URL is not configured in Netlify."
+      },
       500
     );
   }
@@ -46,25 +92,59 @@ export default async function handler(req) {
   if (!SUPABASE_SERVICE_ROLE_KEY) {
     return json(
       {
+        success: false,
         error:
-          "SUPABASE_SERVICE_ROLE_KEY is not configured."
+          "SUPABASE_SERVICE_ROLE_KEY is not configured in Netlify."
       },
       500
     );
   }
 
   try {
-    const body = await req.json();
 
-    const email = String(body.email || "")
+    /* -----------------------------------------------------
+       READ REQUEST
+    ----------------------------------------------------- */
+
+    let body;
+
+    try {
+
+      body = await req.json();
+
+    } catch (error) {
+
+      return json(
+        {
+          success: false,
+          error:
+            "Invalid JSON request."
+        },
+        400
+      );
+    }
+
+    const email =
+      String(
+        body?.email || ""
+      )
       .trim()
       .toLowerCase();
 
-    const password = String(body.password || "");
+    const password =
+      String(
+        body?.password || ""
+      );
+
+    /* -----------------------------------------------------
+       VALIDATE
+    ----------------------------------------------------- */
 
     if (!email || !password) {
+
       return json(
         {
+          success: false,
           error:
             "Admin email and password are required."
         },
@@ -72,45 +152,18 @@ export default async function handler(req) {
       );
     }
 
-    if (email !== ADMIN_EMAIL) {
-      return json(
-        {
-          error: "Invalid admin email or password."
-        },
-        401
-      );
-    }
+    /* -----------------------------------------------------
+       ONLY THE CONFIGURED ADMIN EMAIL
+    ----------------------------------------------------- */
 
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    /*
-     * Sign in using the real Supabase Auth account.
-     */
-    const {
-      data,
-      error
-    } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      console.error(
-        "ADMIN LOGIN ERROR:",
-        error
-      );
+    if (
+      email !==
+      ADMIN_EMAIL.toLowerCase()
+    ) {
 
       return json(
         {
+          success: false,
           error:
             "Invalid admin email or password."
         },
@@ -118,45 +171,162 @@ export default async function handler(req) {
       );
     }
 
-    if (!data.user || !data.session) {
+    /* -----------------------------------------------------
+       SUPABASE ADMIN CLIENT
+    ----------------------------------------------------- */
+
+    const supabase =
+      createClient(
+        SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+    /* -----------------------------------------------------
+       REAL SUPABASE LOGIN
+    ----------------------------------------------------- */
+
+    const {
+      data,
+      error
+    } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+    if (error) {
+
+      console.error(
+        "SUPABASE ADMIN LOGIN ERROR:",
+        error
+      );
+
       return json(
         {
+          success: false,
           error:
-            "Admin authentication did not return a valid session."
+            "Invalid admin email or password."
         },
         401
       );
     }
 
-    /*
-     * Confirm the authenticated account is
-     * the configured admin account.
-     */
+    /* -----------------------------------------------------
+       VERIFY SESSION
+    ----------------------------------------------------- */
+
     if (
-      data.user.email?.toLowerCase() !==
-      ADMIN_EMAIL
+      !data ||
+      !data.user ||
+      !data.session ||
+      !data.session.access_token
     ) {
+
       return json(
         {
-          error: "Unauthorized admin account."
+          success: false,
+          error:
+            "Admin authentication did not return a secure session."
+        },
+        401
+      );
+    }
+
+    /* -----------------------------------------------------
+       VERIFY EMAIL AGAIN
+    ----------------------------------------------------- */
+
+    const authenticatedEmail =
+      String(
+        data.user.email || ""
+      )
+      .trim()
+      .toLowerCase();
+
+    if (
+      authenticatedEmail !==
+      ADMIN_EMAIL.toLowerCase()
+    ) {
+
+      return json(
+        {
+          success: false,
+          error:
+            "This account is not authorized as an administrator."
         },
         403
       );
     }
 
-    return json({
-      success: true,
-      message: "Admin login successful.",
+    /* -----------------------------------------------------
+       REAL SECURE TOKEN
+    ----------------------------------------------------- */
 
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        role: "admin"
+    const accessToken =
+      data.session.access_token;
+
+    const refreshToken =
+      data.session.refresh_token || null;
+
+    /* -----------------------------------------------------
+       SUCCESS
+    ----------------------------------------------------- */
+
+    return json(
+      {
+        success: true,
+
+        message:
+          "Admin login successful.",
+
+        token:
+          accessToken,
+
+        access_token:
+          accessToken,
+
+        refresh_token:
+          refreshToken,
+
+        user: {
+          id:
+            data.user.id,
+
+          email:
+            data.user.email,
+
+          role:
+            "admin"
+        },
+
+        session: {
+          access_token:
+            accessToken,
+
+          refresh_token:
+            refreshToken,
+
+          expires_at:
+            data.session.expires_at,
+
+          expires_in:
+            data.session.expires_in,
+
+          token_type:
+            data.session.token_type || "bearer"
+        }
       },
+      200
+    );
 
-      session: data.session
-    });
   } catch (error) {
+
     console.error(
       "ADMIN FUNCTION ERROR:",
       error
@@ -164,6 +334,7 @@ export default async function handler(req) {
 
     return json(
       {
+        success: false,
         error:
           error instanceof Error
             ? error.message
@@ -174,6 +345,11 @@ export default async function handler(req) {
   }
 }
 
+/* =========================================================
+   NETLIFY ROUTE
+========================================================= */
+
 export const config = {
-  path: "/api/admin"
+  path:
+    "/api/admin"
 };

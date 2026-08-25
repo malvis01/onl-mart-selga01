@@ -4,8 +4,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || "malvisdabz@gmail.com";
+const ADMIN_EMAIL = "malvisdabz@gmail.com";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -16,41 +15,30 @@ const headers = {
 };
 
 function json(data, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...headers,
-        "Content-Type": "application/json"
-      }
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...headers,
+      "Content-Type": "application/json"
     }
-  );
+  });
 }
 
 export default async function handler(req) {
-
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers
-    });
+    return new Response("ok", { headers });
   }
 
   if (req.method !== "POST") {
     return json(
-      {
-        error: "Method not allowed"
-      },
+      { error: "Method not allowed" },
       405
     );
   }
 
   if (!SUPABASE_URL) {
     return json(
-      {
-        error: "SUPABASE_URL is missing."
-      },
+      { error: "SUPABASE_URL is not configured." },
       500
     );
   }
@@ -59,23 +47,20 @@ export default async function handler(req) {
     return json(
       {
         error:
-          "SUPABASE_SERVICE_ROLE_KEY is missing."
+          "SUPABASE_SERVICE_ROLE_KEY is not configured."
       },
       500
     );
   }
 
   try {
-
     const body = await req.json();
 
-    const email =
-      String(body.email || "")
-        .trim()
-        .toLowerCase();
+    const email = String(body.email || "")
+      .trim()
+      .toLowerCase();
 
-    const password =
-      String(body.password || "");
+    const password = String(body.password || "");
 
     if (!email || !password) {
       return json(
@@ -87,12 +72,12 @@ export default async function handler(req) {
       );
     }
 
-    if (email !== ADMIN_EMAIL.toLowerCase()) {
+    if (email !== ADMIN_EMAIL) {
       return json(
         {
-          error: "Admin access denied."
+          error: "Invalid admin email or password."
         },
-        403
+        401
       );
     }
 
@@ -107,14 +92,16 @@ export default async function handler(req) {
       }
     );
 
+    /*
+     * Sign in using the real Supabase Auth account.
+     */
     const {
       data,
       error
-    } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
     if (error) {
       console.error(
@@ -131,212 +118,45 @@ export default async function handler(req) {
       );
     }
 
-    if (!data?.session) {
+    if (!data.user || !data.session) {
       return json(
         {
           error:
-            "Admin login did not return a session."
+            "Admin authentication did not return a valid session."
         },
-        500
-      );
-    }
-
-    const user = data.user;
-
-    /*
-     * Verify the authenticated user.
-     */
-    const {
-      data: profile,
-      error: profileError
-    } =
-      await supabase
-        .from("profiles")
-        .select("id, email, role, full_name")
-        .eq("id", user.id)
-        .maybeSingle();
-
-    if (profileError) {
-      console.error(
-        "ADMIN PROFILE ERROR:",
-        profileError
-      );
-
-      return json(
-        {
-          error:
-            profileError.message
-        },
-        500
+        401
       );
     }
 
     /*
-     * Admin can be identified by the configured
-     * admin email even if an old profile does not
-     * yet have role=admin.
+     * Confirm the authenticated account is
+     * the configured admin account.
      */
     if (
-      profile &&
-      profile.role &&
-      profile.role !== "admin"
+      data.user.email?.toLowerCase() !==
+      ADMIN_EMAIL
     ) {
       return json(
         {
-          error:
-            "This account is not an admin account."
+          error: "Unauthorized admin account."
         },
         403
       );
     }
 
-    /*
-     * Return dashboard information.
-     */
-
-    const [
-      buyersResult,
-      sellersResult,
-      businessesResult,
-      productsResult,
-      ordersResult
-    ] = await Promise.all([
-
-      supabase
-        .from("profiles")
-        .select("id", {
-          count: "exact",
-          head: true
-        })
-        .eq("role", "buyer"),
-
-      supabase
-        .from("profiles")
-        .select("id", {
-          count: "exact",
-          head: true
-        })
-        .eq("role", "seller"),
-
-      supabase
-        .from("businesses")
-        .select("id", {
-          count: "exact",
-          head: true
-        }),
-
-      supabase
-        .from("products")
-        .select("id", {
-          count: "exact",
-          head: true
-        }),
-
-      supabase
-        .from("orders")
-        .select(
-          "id,total_amount,marketplace_commission,payment_status,status,created_at"
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        )
-        .limit(100)
-    ]);
-
-    if (buyersResult.error) {
-      console.error(
-        "BUYERS ERROR:",
-        buyersResult.error
-      );
-    }
-
-    if (sellersResult.error) {
-      console.error(
-        "SELLERS ERROR:",
-        sellersResult.error
-      );
-    }
-
-    if (businessesResult.error) {
-      console.error(
-        "BUSINESSES ERROR:",
-        businessesResult.error
-      );
-    }
-
-    if (productsResult.error) {
-      console.error(
-        "PRODUCTS ERROR:",
-        productsResult.error
-      );
-    }
-
-    if (ordersResult.error) {
-      console.error(
-        "ORDERS ERROR:",
-        ordersResult.error
-      );
-    }
-
-    const orders =
-      ordersResult.data || [];
-
-    const totalCommission =
-      orders.reduce(
-        (sum, order) =>
-          sum +
-          Number(
-            order.marketplace_commission || 0
-          ),
-        0
-      );
-
     return json({
       success: true,
-
-      message:
-        "Admin login successful.",
+      message: "Admin login successful.",
 
       user: {
-        id: user.id,
-        email: user.email,
-        role: "admin",
-        full_name:
-          profile?.full_name ||
-          "Administrator"
+        id: data.user.id,
+        email: data.user.email,
+        role: "admin"
       },
 
-      session:
-        data.session,
-
-      dashboard: {
-        buyers:
-          buyersResult.count || 0,
-
-        sellers:
-          sellersResult.count || 0,
-
-        businesses:
-          businessesResult.count || 0,
-
-        products:
-          productsResult.count || 0,
-
-        orders:
-          orders.length,
-
-        marketplaceCommission:
-          totalCommission
-      },
-
-      orders
+      session: data.session
     });
-
   } catch (error) {
-
     console.error(
       "ADMIN FUNCTION ERROR:",
       error
@@ -347,7 +167,7 @@ export default async function handler(req) {
         error:
           error instanceof Error
             ? error.message
-            : "Invalid server response."
+            : "Admin authentication failed."
       },
       500
     );

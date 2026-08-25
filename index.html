@@ -21,7 +21,7 @@ body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,sans-serif;
   background:var(--bg);
-  color:var(--text);
+  color:var(--text)
 }
 header{
   background:var(--p);
@@ -29,7 +29,7 @@ header{
   padding:14px 18px;
   position:sticky;
   top:0;
-  z-index:10;
+  z-index:10
 }
 .bar{
   max-width:1150px;
@@ -37,11 +37,11 @@ header{
   display:flex;
   align-items:center;
   gap:10px;
-  flex-wrap:wrap;
+  flex-wrap:wrap
 }
 .logo{
   font-weight:800;
-  font-size:21px;
+  font-size:21px
 }
 .spacer{flex:1}
 button,input,select,textarea{font:inherit}
@@ -49,90 +49,94 @@ button{
   border:0;
   border-radius:9px;
   padding:10px 14px;
-  cursor:pointer;
+  cursor:pointer
+}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed
 }
 .btn{
   background:var(--p2);
-  color:#fff;
+  color:#fff
 }
 .btn.light{
   background:#fff;
-  color:var(--p);
+  color:var(--p)
 }
 .btn.danger{
   background:var(--danger);
-  color:#fff;
+  color:#fff
 }
 .btn.gray{
   background:#e8ecef;
-  color:#17202a;
+  color:#17202a
 }
 main{
   max-width:1150px;
   margin:auto;
-  padding:22px;
+  padding:22px
 }
 .hero{
   background:linear-gradient(135deg,#075e54,#0b806f);
   color:#fff;
   border-radius:18px;
   padding:28px;
-  margin-bottom:20px;
+  margin-bottom:20px
 }
 .hero h1{
   margin:0 0 8px;
-  font-size:34px;
+  font-size:34px
 }
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-  gap:15px;
+  gap:15px
 }
 .card{
   background:var(--card);
   border-radius:14px;
   padding:16px;
-  box-shadow:0 2px 10px #0000000d;
+  box-shadow:0 2px 10px #0000000d
 }
 .product img{
   width:100%;
   height:160px;
   object-fit:cover;
   border-radius:10px;
-  background:#e9eeee;
+  background:#e9eeee
 }
 .price{
   font-size:20px;
   font-weight:800;
-  margin:8px 0;
+  margin:8px 0
 }
 .muted{
   color:var(--muted);
-  font-size:14px;
+  font-size:14px
 }
 .panel{
   background:#fff;
   padding:20px;
   border-radius:14px;
-  margin-bottom:18px;
+  margin-bottom:18px
 }
 .row{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  align-items:center;
+  align-items:center
 }
 .form{
   max-width:520px;
-  margin:auto;
+  margin:auto
 }
 .field{
-  margin:10px 0;
+  margin:10px 0
 }
 .field label{
   display:block;
   font-weight:650;
-  margin-bottom:5px;
+  margin-bottom:5px
 }
 .field input,
 .field select,
@@ -140,13 +144,9 @@ main{
   width:100%;
   padding:11px;
   border:1px solid #d6dde1;
-  border-radius:8px;
+  border-radius:8px
 }
 .hidden{display:none!important}
-.stat{
-  font-size:27px;
-  font-weight:800;
-}
 .tag{
   display:inline-block;
   background:#e5f5f2;
@@ -154,37 +154,33 @@ main{
   border-radius:999px;
   padding:4px 9px;
   font-size:12px;
-  font-weight:700;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  text-align:left;
-  padding:10px;
-  border-bottom:1px solid #e8ecef;
-  font-size:14px;
+  font-weight:700
 }
 .notice{
   padding:12px;
   border-radius:9px;
   background:#fff5d9;
-  margin:10px 0;
+  margin:10px 0
 }
 .success{background:#e8f7ee}
 .error{
   background:#fdecec;
-  color:#8b1e1e;
+  color:#8b1e1e
 }
 footer{
   text-align:center;
   color:var(--muted);
-  padding:30px;
+  padding:30px
+}
+.status{
+  margin-top:12px;
+  min-height:10px
 }
 @media(max-width:650px){
   main{padding:14px}
   .hero h1{font-size:27px}
+  .bar{flex-wrap:wrap}
+  .bar button{font-size:13px}
 }
 </style>
 </head>
@@ -193,26 +189,50 @@ footer{
 
 <header>
   <div class="bar">
+
     <div class="logo">SALGA Digital Mart</div>
+
     <div class="spacer"></div>
 
-    <button class="btn light" onclick="show('shop')">Shop</button>
-    <button class="btn light" onclick="show('seller')">Sell</button>
-    <button class="btn light" onclick="show('account')">Account</button>
-    <button class="btn light" onclick="show('care')">Customer Care</button>
-    <button class="btn light" onclick="show('admin')">Admin</button>
+    <button class="btn light" type="button" onclick="show('shop')">
+      Shop
+    </button>
 
-    <button id="logout" class="btn danger hidden" onclick="logout()">
+    <button class="btn light" type="button" onclick="show('seller')">
+      Sell
+    </button>
+
+    <button class="btn light" type="button" onclick="show('account')">
+      Account
+    </button>
+
+    <button class="btn light" type="button" onclick="show('care')">
+      Customer Care
+    </button>
+
+    <button class="btn light" type="button" onclick="show('admin')">
+      Admin
+    </button>
+
+    <button
+      id="logout"
+      class="btn danger hidden"
+      type="button"
+      onclick="logout()">
       Logout
     </button>
+
   </div>
 </header>
 
 <main>
 
+<!-- SHOP -->
+
 <section id="shop">
 
   <div class="hero">
+
     <h1>Buy and sell with SALGA.</h1>
 
     <p>
@@ -221,17 +241,27 @@ footer{
     </p>
 
     <div class="row">
-      <button class="btn light" onclick="show('seller')">
+
+      <button
+        class="btn light"
+        type="button"
+        onclick="show('seller')">
         Create business account
       </button>
 
-      <button class="btn light" onclick="show('account')">
+      <button
+        class="btn light"
+        type="button"
+        onclick="show('account')">
         Buyer account
       </button>
+
     </div>
+
   </div>
 
   <div class="panel">
+
     <div class="row">
 
       <input
@@ -256,6 +286,7 @@ footer{
       </select>
 
     </div>
+
   </div>
 
   <div id="products" class="grid"></div>
@@ -263,54 +294,71 @@ footer{
 </section>
 
 
+<!-- BUYER -->
+
 <section id="account" class="hidden">
 
   <div class="panel form">
 
     <h2>Buyer account</h2>
 
+    <p class="muted">
+      Create an account or log in with your phone number and password.
+    </p>
+
+    <div id="buyerStatus" class="status"></div>
+
     <div id="buyerLogged" class="hidden"></div>
 
     <div id="buyerForm">
 
       <div class="field">
-        <label>Phone number</label>
+
+        <label for="bphone">
+          Phone number
+        </label>
 
         <input
           id="bphone"
           type="tel"
           autocomplete="tel"
           placeholder="+2348012345678">
+
       </div>
 
       <div class="field">
-        <label>Password</label>
+
+        <label for="bpass">
+          Password
+        </label>
 
         <input
           id="bpass"
           type="password"
-          autocomplete="current-password">
+          autocomplete="current-password"
+          placeholder="Enter password">
+
       </div>
 
       <div class="row">
 
         <button
+          id="buyerLoginBtn"
           class="btn"
           type="button"
-          onclick="auth('login')">
+          onclick="buyerAuth('login')">
           Login
         </button>
 
         <button
+          id="buyerRegisterBtn"
           class="btn gray"
           type="button"
-          onclick="auth('register')">
+          onclick="buyerAuth('register')">
           Create account
         </button>
 
       </div>
-
-      <div id="buyerMsg"></div>
 
     </div>
 
@@ -319,20 +367,23 @@ footer{
 </section>
 
 
+<!-- SELLER -->
+
 <section id="seller" class="hidden">
 
   <div class="panel form">
 
     <h2>Business owner account</h2>
 
+    <div id="sellerStatus" class="status"></div>
+
     <div class="field">
-      <label>Business name</label>
-      <input id="sname">
+      <label for="sname">Business name</label>
+      <input id="sname" type="text">
     </div>
 
     <div class="field">
-      <label>Owner phone</label>
-
+      <label for="sphone">Owner phone</label>
       <input
         id="sphone"
         type="tel"
@@ -340,7 +391,9 @@ footer{
     </div>
 
     <div class="field">
-      <label>Email for business notifications</label>
+      <label for="semail">
+        Email for business notifications
+      </label>
 
       <input
         id="semail"
@@ -348,21 +401,21 @@ footer{
     </div>
 
     <div class="field">
-      <label>Password</label>
-
+      <label for="spass">Password</label>
       <input
         id="spass"
         type="password">
     </div>
 
     <div class="field">
-      <label>Bank name</label>
-      <input id="sbank" placeholder="e.g. GTBank">
+      <label for="sbank">Bank name</label>
+      <input
+        id="sbank"
+        placeholder="e.g. GTBank">
     </div>
 
     <div class="field">
-      <label>Bank code</label>
-
+      <label for="sbankcode">Bank code</label>
       <input
         id="sbankcode"
         placeholder="e.g. 058"
@@ -370,8 +423,7 @@ footer{
     </div>
 
     <div class="field">
-      <label>Account number</label>
-
+      <label for="sacct">Account number</label>
       <input
         id="sacct"
         inputmode="numeric"
@@ -381,6 +433,7 @@ footer{
     <div class="row">
 
       <button
+        id="sellerRegisterBtn"
         class="btn"
         type="button"
         onclick="sellerRegister()">
@@ -388,6 +441,7 @@ footer{
       </button>
 
       <button
+        id="sellerLoginBtn"
         class="btn gray"
         type="button"
         onclick="sellerLogin()">
@@ -396,14 +450,14 @@ footer{
 
     </div>
 
-    <div id="sellerMsg"></div>
-
   </div>
 
   <div id="sellerDash" class="panel hidden"></div>
 
 </section>
 
+
+<!-- CUSTOMER CARE -->
 
 <section id="care" class="hidden">
 
@@ -444,6 +498,8 @@ footer{
 </section>
 
 
+<!-- ADMIN -->
+
 <section id="admin" class="hidden">
 
   <div class="panel form">
@@ -451,21 +507,29 @@ footer{
     <h2>Admin access</h2>
 
     <div class="field">
-      <label>Admin email</label>
+
+      <label for="apassEmail">
+        Admin email
+      </label>
 
       <input
         id="apassEmail"
         type="email"
         autocomplete="email">
+
     </div>
 
     <div class="field">
-      <label>Password</label>
+
+      <label for="apass">
+        Password
+      </label>
 
       <input
         id="apass"
         type="password"
         autocomplete="current-password">
+
     </div>
 
     <button
@@ -486,36 +550,33 @@ footer{
 </main>
 
 <footer>
-  SALGA Digital Mart • Marketplace commission 5% • Promotion commission 3%
+  SALGA Digital Mart • Marketplace commission 5% • Promotion service 3%
 </footer>
 
 
 <script>
 
-"use strict";
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
 
 let me = null;
 let session = null;
 let products = [];
 
 
-/* =========================
-   BASIC HELPERS
-========================= */
+/* =========================================================
+   SAFE DOM HELPER
+========================================================= */
 
-const $ = id =>
-  document.getElementById(id);
+function $(id){
+  return document.getElementById(id);
+}
 
 
-const money = n =>
-  "₦" +
-  Number(n || 0).toLocaleString(
-    "en-NG",
-    {
-      maximumFractionDigits:2
-    }
-  );
-
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
 
 function esc(value){
 
@@ -528,36 +589,70 @@ function esc(value){
 }
 
 
-function show(id){
+/* =========================================================
+   MONEY
+========================================================= */
 
-  document
-    .querySelectorAll("main>section")
-    .forEach(section =>
-      section.classList.add("hidden")
+function money(n){
+
+  return "₦" +
+    Number(n || 0).toLocaleString(
+      "en-NG",
+      {
+        maximumFractionDigits:2
+      }
     );
-
-  const section = $(id);
-
-  if(section)
-    section.classList.remove("hidden");
-
-  if(id === "shop")
-    loadProducts();
-
-  if(id === "seller")
-    renderSeller();
-
-  if(id === "account")
-    renderBuyer();
 }
 
 
-function setMessage(id,text,ok=false){
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+function show(id){
+
+  document
+    .querySelectorAll("main > section")
+    .forEach(section => {
+      section.classList.add("hidden");
+    });
+
+  const target = $(id);
+
+  if(!target){
+    console.error("Section not found:",id);
+    return;
+  }
+
+  target.classList.remove("hidden");
+
+  if(id === "shop"){
+    loadProducts();
+  }
+
+  if(id === "account"){
+    renderBuyer();
+  }
+
+  if(id === "seller"){
+    renderSeller();
+  }
+
+  if(id === "care"){
+    loadCare();
+  }
+}
+
+
+/* =========================================================
+   STATUS MESSAGE
+========================================================= */
+
+function showStatus(id,text,ok=false){
 
   const el = $(id);
 
-  if(!el)
-    return;
+  if(!el) return;
 
   el.innerHTML =
     '<div class="notice ' +
@@ -568,56 +663,17 @@ function setMessage(id,text,ok=false){
 }
 
 
-/* =========================
-   RESTORE LOGIN
-========================= */
-
-function restoreSession(){
-
-  try{
-
-    const savedMe =
-      localStorage.getItem("me");
-
-    const savedSession =
-      localStorage.getItem("session");
-
-    if(savedMe)
-      me = JSON.parse(savedMe);
-
-    if(savedSession)
-      session = JSON.parse(savedSession);
-
-  }catch(error){
-
-    console.error(
-      "SESSION RESTORE ERROR",
-      error
-    );
-
-    localStorage.removeItem("me");
-    localStorage.removeItem("session");
-
-    me = null;
-    session = null;
-  }
-
-  updateHeader();
-}
-
-
-/* =========================
+/* =========================================================
    API
-========================= */
+========================================================= */
 
 async function api(path,opts={}){
 
   const headers = {
-    "Content-Type":
-      "application/json"
+    "Content-Type":"application/json"
   };
 
-  if(session?.access_token){
+  if(session && session.access_token){
 
     headers.Authorization =
       "Bearer " +
@@ -635,46 +691,47 @@ async function api(path,opts={}){
 
   try{
 
-    response =
-      await fetch(
-        "/api/" + path,
-        {
-          ...opts,
-
-          headers:{
-            ...headers,
-            ...(opts.headers || {})
-          }
+    response = await fetch(
+      "/api/" + path,
+      {
+        ...opts,
+        headers:{
+          ...headers,
+          ...(opts.headers || {})
         }
-      );
+      }
+    );
 
-  }catch(error){
+  }catch(networkError){
 
     throw new Error(
-      "Could not connect to the server."
+      "Unable to connect to the server. Please check the Netlify deployment."
     );
   }
 
-  const text =
+  const raw =
     await response.text();
 
-  let data = {};
+  let data;
 
-  if(text){
+  try{
 
-    try{
-      data = JSON.parse(text);
-    }catch(error){
+    data =
+      raw
+        ? JSON.parse(raw)
+        : {};
 
-      console.error(
-        "SERVER RESPONSE:",
-        text
-      );
+  }catch(parseError){
 
-      throw new Error(
-        "Invalid server response."
-      );
-    }
+    console.error(
+      "SERVER RESPONSE:",
+      raw
+    );
+
+    throw new Error(
+      "Invalid server response from /api/" +
+      path
+    );
   }
 
   if(!response.ok){
@@ -682,7 +739,9 @@ async function api(path,opts={}){
     throw new Error(
       data.error ||
       data.message ||
-      "Request failed."
+      "Request failed (" +
+      response.status +
+      ")"
     );
   }
 
@@ -690,17 +749,18 @@ async function api(path,opts={}){
 }
 
 
-/* =========================
+/* =========================================================
    PRODUCTS
-========================= */
+========================================================= */
 
 async function loadProducts(){
 
-  const container =
-    $("products");
+  const container = $("products");
 
-  if(!container)
-    return;
+  if(!container) return;
+
+  container.innerHTML =
+    '<div class="panel">Loading products...</div>';
 
   try{
 
@@ -714,91 +774,88 @@ async function loadProducts(){
 
     const search =
       (
-        $("search")?.value ||
-        ""
-      ).toLowerCase();
+        $("search")?.value || ""
+      )
+      .trim()
+      .toLowerCase();
 
     const category =
-      $("category")?.value ||
-      "";
+      $("category")?.value || "";
 
     const filtered =
-      products.filter(product => {
+      products.filter(p => {
 
         const text =
           (
-            (product.name || "") +
+            String(p.name || "") +
             " " +
-            (product.description || "") +
+            String(p.description || "") +
             " " +
-            (product.category || "")
-          ).toLowerCase();
+            String(p.category || "")
+          )
+          .toLowerCase();
 
         return (
-          (!search ||
-            text.includes(search)) &&
-          (!category ||
-            product.category === category)
+          (!search || text.includes(search)) &&
+          (!category || p.category === category)
         );
-
       });
 
     if(!filtered.length){
 
       container.innerHTML =
         '<div class="panel">' +
-        "No products found yet." +
+        'No products found yet.' +
         "</div>";
 
       return;
     }
 
     container.innerHTML =
-      filtered.map(product => {
+      filtered.map(p => {
 
         const image =
-          product.image_url ||
-          product.image ||
+          p.image_url ||
+          p.image ||
           "https://placehold.co/600x400?text=SALGA";
 
         const businessName =
-          product.businesses?.business_name ||
-          product.businessName ||
-          "SALGA seller";
+          p.businesses?.business_name ||
+          p.businessName ||
+          "SALGA Seller";
 
         return `
           <div class="card product">
 
             <img
               src="${esc(image)}"
-              alt="${esc(product.name || "Product")}"
+              alt="${esc(p.name || "Product")}"
               onerror="this.src='https://placehold.co/600x400?text=SALGA'">
 
             <span class="tag">
-              ${esc(product.category || "Other")}
+              ${esc(p.category || "Other")}
             </span>
 
             <h3>
-              ${esc(product.name || "Product")}
+              ${esc(p.name || "")}
             </h3>
 
             <p class="muted">
-              ${esc(product.description || "")}
+              ${esc(p.description || "")}
             </p>
 
             <div class="price">
-              ${money(product.price)}
+              ${money(p.price)}
             </div>
 
             <p class="muted">
-              Seller:
-              ${esc(businessName)}
+              Seller: ${esc(businessName)}
             </p>
 
             <button
               class="btn"
               type="button"
-              onclick="buy('${esc(product.id)}')">
+              onclick="buy('${esc(p.id)}')">
               Buy now
             </button>
 
@@ -817,54 +874,97 @@ async function loadProducts(){
 }
 
 
-/* =========================
-   BUYER AUTH
-========================= */
+/* =========================================================
+   BUYER LOGIN / REGISTRATION
+   THIS IS THE IMPORTANT FIX.
+========================================================= */
 
-async function auth(mode){
+async function buyerAuth(mode){
+
+  const phoneInput = $("bphone");
+  const passwordInput = $("bpass");
+
+  if(!phoneInput || !passwordInput){
+
+    alert(
+      "Buyer form could not be found. Please refresh the page."
+    );
+
+    return;
+  }
+
+  const phone =
+    phoneInput.value.trim();
+
+  const password =
+    passwordInput.value;
+
+  if(!phone){
+
+    showStatus(
+      "buyerStatus",
+      "Please enter your phone number."
+    );
+
+    phoneInput.focus();
+
+    return;
+  }
+
+  if(!password){
+
+    showStatus(
+      "buyerStatus",
+      "Please enter your password."
+    );
+
+    passwordInput.focus();
+
+    return;
+  }
+
+  if(password.length < 6){
+
+    showStatus(
+      "buyerStatus",
+      "Password must be at least 6 characters."
+    );
+
+    passwordInput.focus();
+
+    return;
+  }
+
+  const button =
+    mode === "register"
+      ? $("buyerRegisterBtn")
+      : $("buyerLoginBtn");
+
+  if(button){
+
+    button.disabled = true;
+
+    button.textContent =
+      mode === "register"
+        ? "Creating account..."
+        : "Logging in...";
+  }
+
+  showStatus(
+    "buyerStatus",
+    mode === "register"
+      ? "Creating your buyer account..."
+      : "Logging in..."
+    ,
+    true
+  );
 
   try{
 
-    const phoneInput =
-      $("bphone");
-
-    const passwordInput =
-      $("bpass");
-
-    if(!phoneInput || !passwordInput){
-
-      throw new Error(
-        "Buyer login form could not be found. Please refresh the page."
-      );
-    }
-
-    const phone =
-      phoneInput.value.trim();
-
-    const password =
-      passwordInput.value;
-
-    if(!phone){
-
-      throw new Error(
-        "Please enter your phone number."
-      );
-    }
-
-    if(!password){
-
-      throw new Error(
-        "Please enter your password."
-      );
-    }
-
-    if(password.length < 6){
-
-      throw new Error(
-        "Password must contain at least 6 characters."
-      );
-    }
-
+    /*
+     * EXACT format expected by
+     * the Netlify /api/auth function.
+     */
     const data =
       await api(
         "auth",
@@ -885,23 +985,27 @@ async function auth(mode){
         }
       );
 
-    if(!data || !data.user){
+    if(!data || !data.success){
 
       throw new Error(
-        "The server did not return a valid account."
+        data?.error ||
+        "The account request was not completed."
       );
     }
 
     me =
-      data.user;
+      data.user || null;
 
     session =
       data.session || null;
 
-    localStorage.setItem(
-      "me",
-      JSON.stringify(me)
-    );
+    if(me){
+
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
+    }
 
     if(session){
 
@@ -915,10 +1019,15 @@ async function auth(mode){
 
     renderBuyer();
 
-    alert(
-      mode === "register"
-        ? "Buyer account created successfully."
-        : "Logged in successfully."
+    showStatus(
+      "buyerStatus",
+      data.message ||
+      (
+        mode === "register"
+          ? "Buyer account created successfully."
+          : "Login successful."
+      ),
+      true
     );
 
   }catch(error){
@@ -928,56 +1037,56 @@ async function auth(mode){
       error
     );
 
-    setMessage(
-      "buyerMsg",
-      error?.message ||
-      "Unable to create/login to the account."
+    showStatus(
+      "buyerStatus",
+      error.message ||
+      "Unable to create or log in to the account."
     );
 
-    alert(
-      error?.message ||
-      "Unable to create/login to the account."
-    );
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        mode === "register"
+          ? "Create account"
+          : "Login";
+    }
   }
 }
 
 
-/* =========================
-   SELLER REGISTER
-========================= */
+/* =========================================================
+   SELLER REGISTRATION
+========================================================= */
 
 async function sellerRegister(){
 
+  const name =
+    $("sname").value.trim();
+
+  const phone =
+    $("sphone").value.trim();
+
+  const email =
+    $("semail").value.trim();
+
+  const password =
+    $("spass").value;
+
+  if(!name || !phone || !password){
+
+    showStatus(
+      "sellerStatus",
+      "Business name, phone number and password are required."
+    );
+
+    return;
+  }
+
   try{
-
-    const businessName =
-      $("sname").value.trim();
-
-    const phone =
-      $("sphone").value.trim();
-
-    const password =
-      $("spass").value;
-
-    if(!businessName)
-      throw new Error(
-        "Please enter your business name."
-      );
-
-    if(!phone)
-      throw new Error(
-        "Please enter the owner phone number."
-      );
-
-    if(!password)
-      throw new Error(
-        "Please enter a password."
-      );
-
-    if(password.length < 6)
-      throw new Error(
-        "Password must contain at least 6 characters."
-      );
 
     const data =
       await api(
@@ -995,98 +1104,91 @@ async function sellerRegister(){
 
             password:password,
 
-            businessName:businessName,
+            businessName:name,
 
-            email:
-              $("semail").value.trim(),
+            email:email,
 
-            bankName:
-              $("sbank").value.trim(),
+            bankName:$("sbank").value.trim(),
 
-            bankCode:
-              $("sbankcode").value.trim(),
+            bankCode:$("sbankcode").value.trim(),
 
-            accountNumber:
-              $("sacct").value.trim()
+            accountNumber:$("sacct").value.trim()
 
           })
         }
       );
 
-    if(!data.user){
+    if(!data.success){
 
       throw new Error(
-        "The server did not return a valid seller account."
+        data.error ||
+        "Business account could not be created."
       );
     }
 
-    me =
-      data.user;
+    me = data.user || null;
+    session = data.session || null;
 
-    session =
-      data.session || null;
+    if(me)
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
 
-    localStorage.setItem(
-      "me",
-      JSON.stringify(me)
-    );
-
-    if(session){
-
+    if(session)
       localStorage.setItem(
         "session",
         JSON.stringify(session)
       );
-    }
 
     updateHeader();
-
     renderSeller();
 
-    alert(
-      "Business account created successfully."
+    showStatus(
+      "sellerStatus",
+      data.message ||
+      "Business account created successfully.",
+      true
     );
 
   }catch(error){
 
     console.error(
-      "SELLER REGISTER ERROR",
+      "SELLER REGISTER ERROR:",
       error
     );
 
-    setMessage(
-      "sellerMsg",
+    showStatus(
+      "sellerStatus",
       error.message
     );
-
-    alert(error.message);
   }
 }
 
 
-/* =========================
+/* =========================================================
    SELLER LOGIN
-========================= */
+========================================================= */
 
 async function sellerLogin(){
 
+  const phone =
+    $("sphone").value.trim();
+
+  const password =
+    $("spass").value;
+
+  if(!phone || !password){
+
+    showStatus(
+      "sellerStatus",
+      "Phone number and password are required."
+    );
+
+    return;
+  }
+
   try{
-
-    const phone =
-      $("sphone").value.trim();
-
-    const password =
-      $("spass").value;
-
-    if(!phone)
-      throw new Error(
-        "Please enter the owner phone number."
-      );
-
-    if(!password)
-      throw new Error(
-        "Please enter your password."
-      );
 
     const data =
       await api(
@@ -1108,90 +1210,80 @@ async function sellerLogin(){
         }
       );
 
-    if(!data.user){
+    if(!data.success){
 
       throw new Error(
-        "The server did not return a valid seller account."
+        data.error ||
+        "Business login failed."
       );
     }
 
-    me =
-      data.user;
+    me = data.user || null;
+    session = data.session || null;
 
-    session =
-      data.session || null;
+    if(me)
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
 
-    localStorage.setItem(
-      "me",
-      JSON.stringify(me)
-    );
-
-    if(session){
-
+    if(session)
       localStorage.setItem(
         "session",
         JSON.stringify(session)
       );
-    }
 
     updateHeader();
-
     renderSeller();
 
-    alert(
-      "Business login successful."
+    showStatus(
+      "sellerStatus",
+      data.message ||
+      "Business login successful.",
+      true
     );
 
   }catch(error){
 
-    console.error(
-      "SELLER LOGIN ERROR",
-      error
-    );
-
-    setMessage(
-      "sellerMsg",
+    showStatus(
+      "sellerStatus",
       error.message
     );
-
-    alert(error.message);
   }
 }
 
 
-/* =========================
+/* =========================================================
    BUYER DASHBOARD
-========================= */
+========================================================= */
 
 function renderBuyer(){
 
-  if(
-    !me ||
-    me.role !== "buyer"
-  ){
+  const form =
+    $("buyerForm");
 
-    $("buyerForm")
-      ?.classList
-      .remove("hidden");
+  const logged =
+    $("buyerLogged");
 
-    $("buyerLogged")
-      ?.classList
-      .add("hidden");
+  if(!form || !logged)
+    return;
+
+  if(!me || me.role !== "buyer"){
+
+    form.classList.remove("hidden");
+    logged.classList.add("hidden");
 
     return;
   }
 
-  $("buyerForm")
-    ?.classList
-    .add("hidden");
+  form.classList.add("hidden");
+  logged.classList.remove("hidden");
 
-  $("buyerLogged")
-    ?.classList
-    .remove("hidden");
+  logged.innerHTML = `
 
-  $("buyerLogged").innerHTML = `
-
-    <h3>Welcome back</h3>
+    <h3>
+      Welcome back
+    </h3>
 
     <p>
       ${esc(me.phone || "")}
@@ -1204,12 +1296,19 @@ function renderBuyer(){
       Start shopping
     </button>
 
+    <button
+      class="btn gray"
+      type="button"
+      onclick="logout()">
+      Logout
+    </button>
+
     <div class="panel">
 
-      <h3>Your account</h3>
+      <h3>Your orders</h3>
 
       <p class="muted">
-        You are logged in as a buyer.
+        Your orders will appear here.
       </p>
 
     </div>
@@ -1217,17 +1316,660 @@ function renderBuyer(){
 }
 
 
-/* =========================
+/* =========================================================
    SELLER DASHBOARD
-========================= */
+========================================================= */
 
 function renderSeller(){
 
-  if(
-    !me ||
-    me.role !== "seller"
-  ){
+  const dash =
+    $("sellerDash");
 
-    $("sellerDash")
-      ?.classList
-      .add("hidden")
+  if(!dash)
+    return;
+
+  if(!me || me.role !== "seller"){
+
+    dash.classList.add("hidden");
+
+    return;
+  }
+
+  dash.classList.remove("hidden");
+
+  dash.innerHTML = `
+
+    <h2>
+      ${esc(
+        me.full_name ||
+        "Business dashboard"
+      )}
+    </h2>
+
+    <p class="muted">
+      Manage your business and products.
+    </p>
+
+    <div class="row">
+
+      <button
+        class="btn"
+        type="button"
+        onclick="productForm()">
+        Upload product
+      </button>
+
+      <button
+        class="btn gray"
+        type="button"
+        onclick="sellerOrders()">
+        My orders
+      </button>
+
+      <button
+        class="btn gray"
+        type="button"
+        onclick="promotionForm()">
+        Promote a product
+      </button>
+
+    </div>
+
+    <div id="sellerArea"></div>
+  `;
+
+  productForm();
+}
+
+
+/* =========================================================
+   PRODUCT FORM
+========================================================= */
+
+function productForm(){
+
+  const area =
+    $("sellerArea");
+
+  if(!area)
+    return;
+
+  area.innerHTML = `
+
+    <div class="panel">
+
+      <h3>Upload product</h3>
+
+      <div class="field">
+        <label for="pn">Name</label>
+        <input id="pn" type="text">
+      </div>
+
+      <div class="field">
+        <label for="pp">Price (NGN)</label>
+        <input
+          id="pp"
+          type="number"
+          min="1">
+      </div>
+
+      <div class="field">
+        <label for="pc">Category</label>
+        <input id="pc" type="text">
+      </div>
+
+      <div class="field">
+        <label for="pd">Description</label>
+        <textarea id="pd"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="pif">Product image</label>
+
+        <input
+          id="pif"
+          type="file"
+          accept="image/*">
+      </div>
+
+      <button
+        class="btn"
+        type="button"
+        onclick="addProduct()">
+        Submit product
+      </button>
+
+      <p class="muted">
+        New products require admin approval before appearing publicly.
+      </p>
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   ADD PRODUCT
+========================================================= */
+
+async function addProduct(){
+
+  try{
+
+    const file =
+      $("pif")?.files?.[0];
+
+    let image = "";
+
+    if(file){
+
+      if(file.size > 1500000){
+
+        throw new Error(
+          "Please keep product images below 1.5MB."
+        );
+      }
+
+      image =
+        await new Promise(
+          (resolve,reject) => {
+
+            const reader =
+              new FileReader();
+
+            reader.onload = () =>
+              resolve(reader.result);
+
+            reader.onerror =
+              () =>
+                reject(
+                  new Error(
+                    "Could not read the image."
+                  )
+                );
+
+            reader.readAsDataURL(file);
+          }
+        );
+    }
+
+    await api(
+      "products",
+      {
+        method:"POST",
+
+        body:JSON.stringify({
+
+          name:
+            $("pn").value.trim(),
+
+          price:
+            Number(
+              $("pp").value
+            ),
+
+          category:
+            $("pc").value.trim(),
+
+          description:
+            $("pd").value.trim(),
+
+          image:image
+
+        })
+      }
+    );
+
+    alert(
+      "Product submitted successfully. It is awaiting admin approval."
+    );
+
+    productForm();
+
+    loadProducts();
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/* =========================================================
+   SELLER ORDERS
+========================================================= */
+
+function sellerOrders(){
+
+  const area =
+    $("sellerArea");
+
+  if(!area)
+    return;
+
+  area.innerHTML = `
+
+    <div class="panel">
+
+      <h3>Orders & earnings</h3>
+
+      <p class="muted">
+        Your orders and earnings will appear here.
+      </p>
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   PROMOTION
+========================================================= */
+
+function promotionForm(){
+
+  const area =
+    $("sellerArea");
+
+  if(!area)
+    return;
+
+  area.innerHTML = `
+
+    <div class="panel">
+
+      <h3>Promotion service</h3>
+
+      <p>
+        Promotion commission is <b>3%</b>,
+        in addition to the standard
+        <b>5%</b> marketplace commission.
+      </p>
+
+      <div class="field">
+
+        <label for="promoPid">
+          Product ID
+        </label>
+
+        <input id="promoPid">
+
+      </div>
+
+      <div class="field">
+
+        <label for="promoDays">
+          Promotion days
+        </label>
+
+        <select id="promoDays">
+
+          <option value="7">7</option>
+          <option value="14">14</option>
+          <option value="30">30</option>
+
+        </select>
+
+      </div>
+
+      <button
+        class="btn"
+        type="button"
+        onclick="promote()">
+        Request promotion
+      </button>
+
+    </div>
+  `;
+}
+
+
+async function promote(){
+
+  try{
+
+    const data =
+      await api(
+        "promotions",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+
+            productId:
+              $("promoPid").value.trim(),
+
+            days:
+              Number(
+                $("promoDays").value
+              )
+
+          })
+        }
+      );
+
+    alert(
+      data.message ||
+      "Promotion request submitted."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+  }
+}
+
+
+/* =========================================================
+   BUY
+========================================================= */
+
+function buy(productId){
+
+  if(!me){
+
+    alert(
+      "Please create or log in to a buyer account first."
+    );
+
+    show("account");
+
+    return;
+  }
+
+  if(me.role !== "buyer"){
+
+    alert(
+      "Please use a buyer account to make a purchase."
+    );
+
+    return;
+  }
+
+  alert(
+    "Purchase checkout will be connected to the real Paystack payment endpoint."
+  );
+}
+
+
+/* =========================================================
+   CUSTOMER CARE
+========================================================= */
+
+function loadCare(){
+
+  const chat =
+    $("careChat");
+
+  if(!chat)
+    return;
+
+  if(!chat.innerHTML){
+
+    chat.innerHTML = `
+      <p>
+        <b>SALGA Customer Care:</b>
+        Hello! How can we help you?
+      </p>
+    `;
+  }
+}
+
+
+function askCare(){
+
+  const input =
+    $("careInput");
+
+  const chat =
+    $("careChat");
+
+  if(!input || !chat)
+    return;
+
+  const text =
+    input.value.trim();
+
+  if(!text)
+    return;
+
+  chat.innerHTML += `
+    <p>
+      <b>You:</b>
+      ${esc(text)}
+    </p>
+
+    <p>
+      <b>SALGA Customer Care:</b>
+      Thanks for contacting us. Your message has been received.
+      Please provide any relevant order or account details.
+    </p>
+  `;
+
+  input.value = "";
+
+  chat.scrollTop =
+    chat.scrollHeight;
+}
+
+
+/* =========================================================
+   ADMIN
+========================================================= */
+
+async function adminLogin(){
+
+  const email =
+    $("apassEmail").value.trim();
+
+  const password =
+    $("apass").value;
+
+  const msg =
+    $("adminMsg");
+
+  if(!email || !password){
+
+    if(msg)
+      msg.innerHTML =
+        '<div class="notice error">' +
+        'Admin email and password are required.' +
+        '</div>';
+
+    return;
+  }
+
+  if(msg)
+    msg.innerHTML =
+      '<div class="notice">Logging in...</div>';
+
+  try{
+
+    const data =
+      await api(
+        "admin",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+
+            action:"login",
+
+            email:email,
+
+            password:password
+
+          })
+        }
+      );
+
+    if(data.token){
+
+      localStorage.setItem(
+        "adminToken",
+        data.token
+      );
+    }
+
+    if(msg)
+      msg.innerHTML =
+        '<div class="notice success">' +
+        esc(
+          data.message ||
+          "Admin login successful."
+        ) +
+        '</div>';
+
+    renderAdmin(data);
+
+  }catch(error){
+
+    if(msg)
+      msg.innerHTML =
+        '<div class="notice error">' +
+        esc(error.message) +
+        '</div>';
+  }
+}
+
+
+function renderAdmin(data){
+
+  const dash =
+    $("adminDash");
+
+  if(!dash)
+    return;
+
+  dash.classList.remove("hidden");
+
+  dash.innerHTML = `
+
+    <div class="panel">
+
+      <h2>Admin Dashboard</h2>
+
+      <p>
+        Admin access is active.
+      </p>
+
+      <p class="muted">
+        Use this dashboard to oversee users,
+        sellers, products, orders and commissions.
+      </p>
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logout(){
+
+  me = null;
+  session = null;
+
+  localStorage.removeItem("me");
+  localStorage.removeItem("session");
+  localStorage.removeItem("adminToken");
+
+  updateHeader();
+
+  renderBuyer();
+  renderSeller();
+
+  show("shop");
+
+  alert("You have been logged out.");
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+function updateHeader(){
+
+  const logoutButton =
+    $("logout");
+
+  if(!logoutButton)
+    return;
+
+  if(me){
+
+    logoutButton.classList.remove("hidden");
+
+  }else{
+
+    logoutButton.classList.add("hidden");
+  }
+}
+
+
+/* =========================================================
+   RESTORE LOGIN AFTER REFRESH
+========================================================= */
+
+function restoreSession(){
+
+  try{
+
+    const savedMe =
+      localStorage.getItem("me");
+
+    const savedSession =
+      localStorage.getItem("session");
+
+    if(savedMe){
+
+      me =
+        JSON.parse(savedMe);
+    }
+
+    if(savedSession){
+
+      session =
+        JSON.parse(savedSession);
+    }
+
+  }catch(error){
+
+    console.error(
+      "SESSION RESTORE ERROR:",
+      error
+    );
+
+    me = null;
+    session = null;
+
+    localStorage.removeItem("me");
+    localStorage.removeItem("session");
+  }
+
+  updateHeader();
+}
+
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    restoreSession();
+
+    loadProducts();
+
+  }
+);
+
+</script>
+
+</body>
+</html>

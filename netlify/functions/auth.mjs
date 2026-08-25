@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
+
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -19,7 +20,8 @@ function json(data, status = 200) {
       status,
       headers: {
         ...headers,
-        "Content-Type": "application/json"
+        "Content-Type":
+          "application/json"
       }
     }
   );
@@ -28,19 +30,27 @@ function json(data, status = 200) {
 export default async function handler(req) {
 
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers });
+    return new Response("ok", {
+      headers
+    });
   }
 
   if (req.method !== "POST") {
     return json(
-      { error: "Method not allowed" },
+      {
+        error:
+          "Method not allowed"
+      },
       405
     );
   }
 
   if (!SUPABASE_URL) {
     return json(
-      { error: "SUPABASE_URL is not configured in Netlify." },
+      {
+        error:
+          "SUPABASE_URL is not configured in Netlify."
+      },
       500
     );
   }
@@ -55,38 +65,56 @@ export default async function handler(req) {
     );
   }
 
-  const supabase = createClient(
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
+  const supabase =
+    createClient(
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken:
+            false,
+          persistSession:
+            false
+        }
       }
-    }
-  );
+    );
 
   try {
 
-    const body = await req.json();
+    const body =
+      await req.json();
 
     const action =
-      String(body.action || "login").trim();
+      String(
+        body.action || "login"
+      ).trim();
 
     const role =
-      String(body.role || "").trim();
+      String(
+        body.role || ""
+      ).trim();
 
     const phone =
-      String(body.phone || "").trim();
+      String(
+        body.phone || ""
+      ).trim();
 
     const password =
-      String(body.password || "");
+      String(
+        body.password || ""
+      );
 
+    /*
+     * Validate basic information.
+     */
     if (
       !phone ||
       !password ||
-      !["buyer", "seller"].includes(role)
+      !["buyer", "seller"].includes(
+        role
+      )
     ) {
+
       return json(
         {
           error:
@@ -97,50 +125,70 @@ export default async function handler(req) {
     }
 
     /*
-     * Phone numbers are converted to an internal
-     * email address for Supabase Auth.
-     *
-     * The customer still uses ONLY their phone
-     * number when registering and logging in.
+     * Supabase Auth uses email internally.
+     * Customers still use their phone number.
      */
     const cleanPhone =
-      phone.replace(/\D/g, "");
+      phone.replace(
+        /\D/g,
+        ""
+      );
+
+    if (!cleanPhone) {
+      return json(
+        {
+          error:
+            "Please enter a valid phone number."
+        },
+        400
+      );
+    }
 
     const authEmail =
       `${cleanPhone}@users.salgadigitalmart.local`;
 
     /*
-     * ==========================================
+     * ==================================================
      * REGISTER
-     * ==========================================
+     * ==================================================
      */
-    if (action === "register") {
+    if (
+      action === "register"
+    ) {
+
+      const businessName =
+        String(
+          body.businessName || ""
+        ).trim();
+
+      const bankName =
+        String(
+          body.bankName || ""
+        ).trim();
+
+      const bankCode =
+        String(
+          body.bankCode || ""
+        ).trim();
+
+      const accountNumber =
+        String(
+          body.accountNumber || ""
+        ).trim();
 
       /*
-       * Seller-required information.
+       * Seller validation.
        */
-      if (role === "seller") {
-
-        const businessName =
-          String(
-            body.businessName || ""
-          ).trim();
-
-        const bankName =
-          String(
-            body.bankName || ""
-          ).trim();
-
-        const accountNumber =
-          String(
-            body.accountNumber || ""
-          ).trim();
+      if (
+        role === "seller"
+      ) {
 
         if (
           !businessName ||
           !bankName ||
           !accountNumber
         ) {
+
           return json(
             {
               error:
@@ -152,75 +200,127 @@ export default async function handler(req) {
       }
 
       /*
-       * Check whether phone number already exists.
+       * Check whether a profile with this
+       * phone number already exists.
        */
       const {
-        data: existing,
-        error: existingError
-      } = await supabase
-        .from("profiles")
-        .select("id, phone, role")
-        .eq("phone", phone)
-        .maybeSingle();
+        data: existingProfile,
+        error: existingProfileError
+      } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, phone, role"
+          )
+          .eq(
+            "phone",
+            phone
+          )
+          .maybeSingle();
 
-      if (existingError) {
+      if (
+        existingProfileError
+      ) {
 
         console.error(
           "PROFILE CHECK ERROR:",
-          existingError
+          existingProfileError
         );
 
         return json(
           {
             error:
-              "Unable to check the account. Please try again."
+              existingProfileError.message
           },
           500
         );
       }
 
-      if (existing) {
+      if (
+        existingProfile
+      ) {
 
         return json(
           {
             error:
-              "An account with this phone number already exists."
+              "An account with this phone number already exists. Please log in instead."
           },
           409
         );
       }
 
       /*
-       * Create the real Supabase Auth account.
+       * Create the real Supabase Auth user.
        */
       const {
         data: authData,
         error: authError
       } =
-        await supabase.auth.admin.createUser({
-          email: authEmail,
-          password,
-          email_confirm: true,
+        await supabase
+          .auth
+          .admin
+          .createUser({
+            email:
+              authEmail,
 
-          user_metadata: {
-            phone,
-            role,
+            password:
+              password,
 
-            full_name:
-              role === "seller"
-                ? String(
-                    body.businessName || ""
-                  ).trim()
-                : ""
-          }
-        });
+            email_confirm:
+              true,
 
+            user_metadata: {
+              phone:
+                phone,
+
+              role:
+                role,
+
+              full_name:
+                role === "seller"
+                  ? businessName
+                  : ""
+            }
+          });
+
+      /*
+       * If the Auth user already exists but
+       * the profile check did not find it,
+       * return a useful message instead of
+       * exposing a database error.
+       */
       if (authError) {
 
         console.error(
-          "SUPABASE AUTH CREATE ERROR:",
+          "AUTH CREATE ERROR:",
           authError
         );
+
+        const message =
+          String(
+            authError.message || ""
+          ).toLowerCase();
+
+        if (
+          message.includes(
+            "already registered"
+          ) ||
+          message.includes(
+            "already exists"
+          ) ||
+          message.includes(
+            "duplicate"
+          )
+        ) {
+
+          return json(
+            {
+              error:
+                "An account with this phone number already exists. Please log in instead."
+            },
+            409
+          );
+        }
 
         return json(
           {
@@ -235,7 +335,12 @@ export default async function handler(req) {
         authData.user;
 
       /*
-       * Create the application profile.
+       * Create/update the application profile.
+       *
+       * IMPORTANT:
+       * We use UPSERT instead of INSERT because
+       * another Supabase process may have already
+       * created the profile.
        */
       const {
         data: profile,
@@ -243,35 +348,58 @@ export default async function handler(req) {
       } =
         await supabase
           .from("profiles")
-          .insert({
-            id: user.id,
-            phone,
-            role,
+          .upsert(
+            {
+              id:
+                user.id,
 
-            full_name:
-              role === "seller"
-                ? String(
-                    body.businessName || ""
-                  ).trim()
-                : ""
-          })
+              phone:
+                phone,
+
+              role:
+                role,
+
+              full_name:
+                role === "seller"
+                  ? businessName
+                  : ""
+            },
+            {
+              onConflict:
+                "id"
+            }
+          )
           .select()
           .single();
 
-      if (profileError) {
+      if (
+        profileError
+      ) {
 
         console.error(
-          "PROFILE CREATE ERROR:",
+          "PROFILE UPSERT ERROR:",
           profileError
         );
 
         /*
-         * Remove Auth user if profile creation
-         * failed so we don't leave a broken account.
+         * Remove the Auth account only if
+         * the profile could not be created.
          */
-        await supabase.auth.admin.deleteUser(
-          user.id
-        );
+        try {
+          await supabase
+            .auth
+            .admin
+            .deleteUser(
+              user.id
+            );
+        } catch (
+          cleanupError
+        ) {
+          console.error(
+            "AUTH CLEANUP ERROR:",
+            cleanupError
+          );
+        }
 
         return json(
           {
@@ -283,77 +411,127 @@ export default async function handler(req) {
       }
 
       /*
-       * Create seller business record.
+       * ==================================================
+       * SELLER BUSINESS RECORD
+       * ==================================================
        */
-      if (role === "seller") {
+      if (
+        role === "seller"
+      ) {
 
+        /*
+         * Check whether the business already exists.
+         */
         const {
-          error: businessError
+          data: existingBusiness,
+          error: businessCheckError
         } =
           await supabase
             .from("businesses")
-            .insert({
-              owner_id:
-                user.id,
+            .select("id")
+            .eq(
+              "owner_id",
+              user.id
+            )
+            .maybeSingle();
 
-              business_name:
-                String(
-                  body.businessName
-                ).trim(),
-
-              status:
-                "active",
-
-              bank_name:
-                String(
-                  body.bankName || ""
-                ).trim(),
-
-              bank_code:
-                String(
-                  body.bankCode || ""
-                ).trim(),
-
-              account_number:
-                String(
-                  body.accountNumber || ""
-                ).trim()
-            });
-
-        if (businessError) {
+        if (
+          businessCheckError
+        ) {
 
           console.error(
-            "BUSINESS CREATE ERROR:",
-            businessError
-          );
-
-          await supabase.auth.admin.deleteUser(
-            user.id
+            "BUSINESS CHECK ERROR:",
+            businessCheckError
           );
 
           return json(
             {
               error:
-                businessError.message
+                businessCheckError.message
             },
-            400
+            500
           );
+        }
+
+        /*
+         * Only create the business record
+         * if one doesn't already exist.
+         */
+        if (
+          !existingBusiness
+        ) {
+
+          const {
+            error: businessError
+          } =
+            await supabase
+              .from("businesses")
+              .insert({
+                owner_id:
+                  user.id,
+
+                business_name:
+                  businessName,
+
+                status:
+                  "active",
+
+                bank_name:
+                  bankName,
+
+                bank_code:
+                  bankCode,
+
+                account_number:
+                  accountNumber
+              });
+
+          if (
+            businessError
+          ) {
+
+            console.error(
+              "BUSINESS CREATE ERROR:",
+              businessError
+            );
+
+            return json(
+              {
+                error:
+                  businessError.message
+              },
+              400
+            );
+          }
         }
       }
 
       /*
-       * Automatically log the new account in.
+       * ==================================================
+       * AUTOMATIC LOGIN AFTER REGISTRATION
+       * ==================================================
        */
       const {
         data: loginData,
         error: loginError
       } =
-        await supabase.auth.signInWithPassword({
-          email: authEmail,
-          password
-        });
+        await supabase
+          .auth
+          .signInWithPassword({
+            email:
+              authEmail,
 
-      if (loginError) {
+            password:
+              password
+          });
+
+      /*
+       * The account itself was successfully
+       * created even if automatic login fails.
+       */
+      if (
+        loginError
+      ) {
 
         console.error(
           "AUTO LOGIN ERROR:",
@@ -362,35 +540,54 @@ export default async function handler(req) {
 
         return json(
           {
-            success: true,
+            success:
+              true,
 
             message:
               "Account created successfully. Please log in.",
 
             user: {
-              id: user.id,
-              phone,
-              role,
+              id:
+                user.id,
+
+              phone:
+                phone,
+
+              role:
+                role,
+
               full_name:
-                profile.full_name || ""
+                profile.full_name ||
+                ""
             }
           },
           201
         );
       }
 
+      /*
+       * Registration successful.
+       */
       return json({
-        success: true,
+        success:
+          true,
 
         message:
           "Account created successfully.",
 
         user: {
-          id: user.id,
-          phone,
-          role,
+          id:
+            user.id,
+
+          phone:
+            phone,
+
+          role:
+            role,
+
           full_name:
-            profile.full_name || ""
+            profile.full_name ||
+            ""
         },
 
         session:
@@ -399,21 +596,28 @@ export default async function handler(req) {
     }
 
     /*
-     * ==========================================
+     * ==================================================
      * LOGIN
-     * ==========================================
+     * ==================================================
      */
 
     const {
       data: loginData,
       error: loginError
     } =
-      await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password
-      });
+      await supabase
+        .auth
+        .signInWithPassword({
+          email:
+            authEmail,
 
-    if (loginError) {
+          password:
+            password
+        });
+
+    if (
+      loginError
+    ) {
 
       console.error(
         "LOGIN ERROR:",
@@ -433,7 +637,7 @@ export default async function handler(req) {
       loginData.user;
 
     /*
-     * Get application profile.
+     * Get the application profile.
      */
     const {
       data: profile,
@@ -442,7 +646,10 @@ export default async function handler(req) {
       await supabase
         .from("profiles")
         .select("*")
-        .eq("id", authUser.id)
+        .eq(
+          "id",
+          authUser.id
+        )
         .single();
 
     if (
@@ -460,10 +667,12 @@ export default async function handler(req) {
     }
 
     /*
-     * Make sure buyer/seller selected on the
-     * website matches the actual account role.
+     * Make sure the selected account type
+     * matches the actual account.
      */
-    if (profile.role !== role) {
+    if (
+      profile.role !== role
+    ) {
 
       return json(
         {
@@ -474,8 +683,12 @@ export default async function handler(req) {
       );
     }
 
+    /*
+     * Login successful.
+     */
     return json({
-      success: true,
+      success:
+        true,
 
       message:
         "Login successful.",
@@ -485,20 +698,24 @@ export default async function handler(req) {
           authUser.id,
 
         phone:
-          profile.phone || phone,
+          profile.phone ||
+          phone,
 
         role:
           profile.role,
 
         full_name:
-          profile.full_name || ""
+          profile.full_name ||
+          ""
       },
 
       session:
         loginData.session
     });
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     console.error(
       "AUTH FUNCTION ERROR:",
@@ -518,5 +735,6 @@ export default async function handler(req) {
 }
 
 export const config = {
-  path: "/api/auth"
+  path:
+    "/api/auth"
 };

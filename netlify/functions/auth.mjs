@@ -20,8 +20,7 @@ function json(data, status = 200) {
       status,
       headers: {
         ...headers,
-        "Content-Type":
-          "application/json"
+        "Content-Type": "application/json"
       }
     }
   );
@@ -38,13 +37,15 @@ export default async function handler(req) {
   if (req.method !== "POST") {
     return json(
       {
-        error:
-          "Method not allowed"
+        error: "Method not allowed"
       },
       405
     );
   }
 
+  /*
+   * Check Netlify environment variables.
+   */
   if (!SUPABASE_URL) {
     return json(
       {
@@ -65,56 +66,44 @@ export default async function handler(req) {
     );
   }
 
-  const supabase =
-    createClient(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken:
-            false,
-          persistSession:
-            false
-        }
+  /*
+   * Server-side Supabase client.
+   */
+  const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
       }
-    );
+    }
+  );
 
   try {
 
-    const body =
-      await req.json();
+    const body = await req.json();
 
     const action =
-      String(
-        body.action || "login"
-      ).trim();
+      String(body.action || "login").trim();
 
     const role =
-      String(
-        body.role || ""
-      ).trim();
+      String(body.role || "").trim();
 
     const phone =
-      String(
-        body.phone || ""
-      ).trim();
+      String(body.phone || "").trim();
 
     const password =
-      String(
-        body.password || ""
-      );
+      String(body.password || "");
 
     /*
-     * Validate basic information.
+     * Validate account type and credentials.
      */
     if (
       !phone ||
       !password ||
-      !["buyer", "seller"].includes(
-        role
-      )
+      !["buyer", "seller"].includes(role)
     ) {
-
       return json(
         {
           error:
@@ -125,14 +114,14 @@ export default async function handler(req) {
     }
 
     /*
-     * Supabase Auth uses email internally.
-     * Customers still use their phone number.
+     * Convert phone number into an internal
+     * Supabase Auth email.
+     *
+     * The user still uses their phone number
+     * on the website.
      */
     const cleanPhone =
-      phone.replace(
-        /\D/g,
-        ""
-      );
+      phone.replace(/\D/g, "");
 
     if (!cleanPhone) {
       return json(
@@ -152,47 +141,23 @@ export default async function handler(req) {
      * REGISTER
      * ==================================================
      */
-    if (
-      action === "register"
-    ) {
+    if (action === "register") {
 
       const businessName =
         String(
           body.businessName || ""
         ).trim();
 
-      const bankName =
-        String(
-          body.bankName || ""
-        ).trim();
-
-      const bankCode =
-        String(
-          body.bankCode || ""
-        ).trim();
-
-      const accountNumber =
-        String(
-          body.accountNumber || ""
-        ).trim();
-
       /*
        * Seller validation.
        */
-      if (
-        role === "seller"
-      ) {
+      if (role === "seller") {
 
-        if (
-          !businessName ||
-          !bankName ||
-          !accountNumber
-        ) {
-
+        if (!businessName) {
           return json(
             {
               error:
-                "Business name, bank name and account number are required."
+                "Business name is required."
             },
             400
           );
@@ -200,8 +165,8 @@ export default async function handler(req) {
       }
 
       /*
-       * Check whether a profile with this
-       * phone number already exists.
+       * Check whether this phone already has
+       * an application profile.
        */
       const {
         data: existingProfile,
@@ -218,9 +183,7 @@ export default async function handler(req) {
           )
           .maybeSingle();
 
-      if (
-        existingProfileError
-      ) {
+      if (existingProfileError) {
 
         console.error(
           "PROFILE CHECK ERROR:",
@@ -236,9 +199,7 @@ export default async function handler(req) {
         );
       }
 
-      if (
-        existingProfile
-      ) {
+      if (existingProfile) {
 
         return json(
           {
@@ -250,45 +211,36 @@ export default async function handler(req) {
       }
 
       /*
-       * Create the real Supabase Auth user.
+       * Create the real Supabase Auth account.
        */
       const {
         data: authData,
         error: authError
       } =
-        await supabase
-          .auth
-          .admin
-          .createUser({
-            email:
-              authEmail,
+        await supabase.auth.admin.createUser({
+          email:
+            authEmail,
 
-            password:
-              password,
+          password:
+            password,
 
-            email_confirm:
-              true,
+          email_confirm:
+            true,
 
-            user_metadata: {
-              phone:
-                phone,
+          user_metadata: {
+            phone:
+              phone,
 
-              role:
-                role,
+            role:
+              role,
 
-              full_name:
-                role === "seller"
-                  ? businessName
-                  : ""
-            }
-          });
+            full_name:
+              role === "seller"
+                ? businessName
+                : ""
+          }
+        });
 
-      /*
-       * If the Auth user already exists but
-       * the profile check did not find it,
-       * return a useful message instead of
-       * exposing a database error.
-       */
       if (authError) {
 
         console.error(
@@ -312,7 +264,6 @@ export default async function handler(req) {
             "duplicate"
           )
         ) {
-
           return json(
             {
               error:
@@ -335,12 +286,12 @@ export default async function handler(req) {
         authData.user;
 
       /*
-       * Create/update the application profile.
+       * ==================================================
+       * PROFILE
+       * ==================================================
        *
-       * IMPORTANT:
-       * We use UPSERT instead of INSERT because
-       * another Supabase process may have already
-       * created the profile.
+       * Use UPSERT because Supabase may already create
+       * a profile through a database trigger.
        */
       const {
         data: profile,
@@ -372,9 +323,7 @@ export default async function handler(req) {
           .select()
           .single();
 
-      if (
-        profileError
-      ) {
+      if (profileError) {
 
         console.error(
           "PROFILE UPSERT ERROR:",
@@ -382,16 +331,13 @@ export default async function handler(req) {
         );
 
         /*
-         * Remove the Auth account only if
-         * the profile could not be created.
+         * Clean up the Auth account if profile
+         * creation/update fails.
          */
         try {
-          await supabase
-            .auth
-            .admin
-            .deleteUser(
-              user.id
-            );
+          await supabase.auth.admin.deleteUser(
+            user.id
+          );
         } catch (
           cleanupError
         ) {
@@ -412,16 +358,20 @@ export default async function handler(req) {
 
       /*
        * ==================================================
-       * SELLER BUSINESS RECORD
+       * SELLER BUSINESS
        * ==================================================
+       *
+       * IMPORTANT:
+       * We only use columns confirmed to exist
+       * in the current businesses table.
+       *
+       * We intentionally DO NOT send:
+       * account_number
+       * bank_name
+       * bank_code
        */
-      if (
-        role === "seller"
-      ) {
+      if (role === "seller") {
 
-        /*
-         * Check whether the business already exists.
-         */
         const {
           data: existingBusiness,
           error: businessCheckError
@@ -435,9 +385,7 @@ export default async function handler(req) {
             )
             .maybeSingle();
 
-        if (
-          businessCheckError
-        ) {
+        if (businessCheckError) {
 
           console.error(
             "BUSINESS CHECK ERROR:",
@@ -454,12 +402,10 @@ export default async function handler(req) {
         }
 
         /*
-         * Only create the business record
-         * if one doesn't already exist.
+         * Only create the business if one does
+         * not already exist.
          */
-        if (
-          !existingBusiness
-        ) {
+        if (!existingBusiness) {
 
           const {
             error: businessError
@@ -474,21 +420,10 @@ export default async function handler(req) {
                   businessName,
 
                 status:
-                  "active",
-
-                bank_name:
-                  bankName,
-
-                bank_code:
-                  bankCode,
-
-                account_number:
-                  accountNumber
+                  "active"
               });
 
-          if (
-            businessError
-          ) {
+          if (businessError) {
 
             console.error(
               "BUSINESS CREATE ERROR:",
@@ -508,30 +443,26 @@ export default async function handler(req) {
 
       /*
        * ==================================================
-       * AUTOMATIC LOGIN AFTER REGISTRATION
+       * AUTOMATIC LOGIN
        * ==================================================
        */
       const {
         data: loginData,
         error: loginError
       } =
-        await supabase
-          .auth
-          .signInWithPassword({
-            email:
-              authEmail,
+        await supabase.auth.signInWithPassword({
+          email:
+            authEmail,
 
-            password:
-              password
-          });
+          password:
+            password
+        });
 
       /*
-       * The account itself was successfully
-       * created even if automatic login fails.
+       * Account was created even if automatic
+       * login fails.
        */
-      if (
-        loginError
-      ) {
+      if (loginError) {
 
         console.error(
           "AUTO LOGIN ERROR:",
@@ -566,7 +497,7 @@ export default async function handler(req) {
       }
 
       /*
-       * Registration successful.
+       * Registration completed successfully.
        */
       return json({
         success:
@@ -605,19 +536,15 @@ export default async function handler(req) {
       data: loginData,
       error: loginError
     } =
-      await supabase
-        .auth
-        .signInWithPassword({
-          email:
-            authEmail,
+      await supabase.auth.signInWithPassword({
+        email:
+          authEmail,
 
-          password:
-            password
-        });
+        password:
+          password
+      });
 
-    if (
-      loginError
-    ) {
+    if (loginError) {
 
       console.error(
         "LOGIN ERROR:",
@@ -637,7 +564,7 @@ export default async function handler(req) {
       loginData.user;
 
     /*
-     * Get the application profile.
+     * Load application profile.
      */
     const {
       data: profile,
@@ -667,8 +594,7 @@ export default async function handler(req) {
     }
 
     /*
-     * Make sure the selected account type
-     * matches the actual account.
+     * Verify account type.
      */
     if (
       profile.role !== role
@@ -713,9 +639,7 @@ export default async function handler(req) {
         loginData.session
     });
 
-  } catch (
-    error
-  ) {
+  } catch (error) {
 
     console.error(
       "AUTH FUNCTION ERROR:",

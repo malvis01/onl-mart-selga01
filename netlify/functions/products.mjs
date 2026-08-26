@@ -14,7 +14,8 @@ const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, apikey, x-client-info",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
+  "Access-Control-Allow-Methods":
+    "GET, POST, PUT, DELETE, OPTIONS"
 };
 
 function json(data, status = 200) {
@@ -54,7 +55,10 @@ export default async (req) => {
     /*
      * GET PRODUCTS
      *
-     * Only approved, non-deleted products are shown publicly.
+     * Public marketplace products.
+     * Products marked as deleted are hidden.
+     * Seller products are created with approved=true,
+     * so they appear immediately after upload.
      */
     if (req.method === "GET") {
       const { data, error } = await supabase
@@ -83,10 +87,16 @@ export default async (req) => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        return json({ error: error.message }, 500);
+        console.error("GET PRODUCTS ERROR:", error);
+
+        return json(
+          { error: error.message },
+          500
+        );
       }
 
       return json({
+        success: true,
         products: data || []
       });
     }
@@ -94,162 +104,332 @@ export default async (req) => {
     /*
      * CREATE PRODUCT
      *
-     * Only authenticated sellers/business owners can create products.
+     * Only authenticated sellers/business owners
+     * can create products.
      */
     if (req.method === "POST") {
       const user = await getUser(req);
 
       if (!user) {
         return json(
-          { error: "Authentication required" },
+          {
+            success: false,
+            error: "Authentication required. Please log in again."
+          },
           401
         );
       }
 
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("id, role, phone, full_name")
-          .eq("id", user.id)
-          .single();
+      /*
+       * Get the authenticated user's profile.
+       */
+      const {
+        data: profile,
+        error: profileError
+      } = await supabase
+        .from("profiles")
+        .select(
+          "id, role, phone, full_name"
+        )
+        .eq("id", user.id)
+        .single();
 
       if (profileError || !profile) {
+        console.error(
+          "PROFILE LOOKUP ERROR:",
+          profileError
+        );
+
         return json(
-          { error: "User profile not found" },
+          {
+            success: false,
+            error: "User profile not found."
+          },
           404
         );
       }
 
+      /*
+       * Only sellers can upload products.
+       */
       if (profile.role !== "seller") {
         return json(
-          { error: "Only business owners can add products" },
+          {
+            success: false,
+            error:
+              "Only business owners can add products."
+          },
           403
         );
       }
 
-      const body = await req.json();
-
-      if (!body.name || body.price === undefined) {
-        return json(
-          { error: "Product name and price are required" },
-          400
-        );
-      }
-
       /*
-       * Find the seller's real business.
+       * Read request body.
        */
-      const { data: business, error: businessError } =
-        await supabase
-          .from("businesses")
-          .select("id, business_name, status")
-          .eq("owner_id", user.id)
-          .maybeSingle();
+      let body;
 
-      if (businessError) {
-        return json(
-          { error: businessError.message },
-          500
-        );
-      }
-
-      if (!business) {
+      try {
+        body = await req.json();
+      } catch {
         return json(
           {
-            error:
-              "Create your business profile before adding products"
+            success: false,
+            error: "Invalid product data."
           },
           400
         );
       }
 
+      /*
+       * Validate required fields.
+       */
+      if (
+        !body.name ||
+        String(body.name).trim() === ""
+      ) {
+        return json(
+          {
+            success: false,
+            error: "Product name is required."
+          },
+          400
+        );
+      }
+
+      if (
+        body.price === undefined ||
+        body.price === null ||
+        body.price === ""
+      ) {
+        return json(
+          {
+            success: false,
+            error: "Product price is required."
+          },
+          400
+        );
+      }
+
+      /*
+       * Find the seller's business profile.
+       */
+      const {
+        data: business,
+        error: businessError
+      } = await supabase
+        .from("businesses")
+        .select(
+          "id, business_name, status"
+        )
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (businessError) {
+        console.error(
+          "BUSINESS LOOKUP ERROR:",
+          businessError
+        );
+
+        return json(
+          {
+            success: false,
+            error: businessError.message
+          },
+          500
+        );
+      }
+
+      /*
+       * Seller must create a business profile first.
+       */
+      if (!business) {
+        return json(
+          {
+            success: false,
+            error:
+              "Create your business profile before adding products."
+          },
+          400
+        );
+      }
+
+      /*
+       * Business must be active.
+       */
       if (business.status !== "active") {
         return json(
-          { error: "Your business is not active" },
+          {
+            success: false,
+            error:
+              "Your business is not active. Please complete your business profile."
+          },
           403
         );
       }
 
-      const product = {
-        business_id: business.id,
-        name: String(body.name).trim(),
-        description: String(body.description || "").trim(),
-        price: Number(body.price),
-        image_url: String(body.image_url || body.image || "").trim(),
-        category: String(body.category || "Other").trim(),
-        stock: Number.isFinite(Number(body.stock))
-          ? Number(body.stock)
-          : 0,
-        status: "active",
-
-        /*
-         * New seller products require admin approval.
-         * This prevents unapproved products appearing publicly.
-         */
-        approved: false
-      };
+      /*
+       * Convert and validate price.
+       */
+      const price = Number(body.price);
 
       if (
-        !Number.isFinite(product.price) ||
-        product.price <= 0
+        !Number.isFinite(price) ||
+        price <= 0
       ) {
         return json(
-          { error: "Product price must be greater than zero" },
+          {
+            success: false,
+            error:
+              "Product price must be greater than zero."
+          },
           400
         );
       }
 
-      const { data: created, error: createError } =
-        await supabase
-          .from("products")
-          .insert(product)
-          .select(`
-            id,
-            business_id,
-            name,
-            description,
-            price,
-            image_url,
-            category,
-            stock,
-            status,
-            approved,
-            created_at
-          `)
-          .single();
+      /*
+       * Convert and validate stock.
+       */
+      const stock =
+        body.stock === undefined ||
+        body.stock === null ||
+        body.stock === ""
+          ? 0
+          : Number(body.stock);
+
+      if (
+        !Number.isFinite(stock) ||
+        stock < 0
+      ) {
+        return json(
+          {
+            success: false,
+            error:
+              "Product stock must be zero or greater."
+          },
+          400
+        );
+      }
+
+      /*
+       * Build the product.
+       *
+       * IMPORTANT:
+       * approved is TRUE because sellers should not
+       * need administrator approval before their
+       * products appear on the marketplace.
+       */
+      const product = {
+        business_id: business.id,
+
+        name: String(body.name).trim(),
+
+        description:
+          String(
+            body.description || ""
+          ).trim(),
+
+        price,
+
+        image_url:
+          String(
+            body.image_url ||
+            body.image ||
+            ""
+          ).trim(),
+
+        category:
+          String(
+            body.category ||
+            "Other"
+          ).trim(),
+
+        stock,
+
+        status: "active",
+
+        approved: true
+      };
+
+      /*
+       * Insert the product into Supabase.
+       */
+      const {
+        data: created,
+        error: createError
+      } = await supabase
+        .from("products")
+        .insert(product)
+        .select(`
+          id,
+          business_id,
+          name,
+          description,
+          price,
+          image_url,
+          category,
+          stock,
+          status,
+          approved,
+          created_at
+        `)
+        .single();
 
       if (createError) {
+        console.error(
+          "CREATE PRODUCT ERROR:",
+          createError
+        );
+
         return json(
-          { error: createError.message },
+          {
+            success: false,
+            error: createError.message
+          },
           400
         );
       }
 
+      /*
+       * Product was successfully created
+       * and is immediately live.
+       */
       return json(
         {
           success: true,
+
           product: created,
+
           message:
-            "Product submitted successfully and is awaiting admin approval."
+            "Product uploaded successfully and is now live."
         },
         201
       );
     }
 
+    /*
+     * Unsupported request method.
+     */
     return json(
-      { error: "Method not allowed" },
+      {
+        success: false,
+        error: "Method not allowed"
+      },
       405
     );
 
   } catch (error) {
-    console.error("PRODUCT ERROR:", error);
+    console.error(
+      "PRODUCT ERROR:",
+      error
+    );
 
     return json(
       {
+        success: false,
         error:
           error instanceof Error
             ? error.message
-            : "Product operation failed"
+            : "Product operation failed."
       },
       500
     );

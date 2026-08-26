@@ -1,224 +1,596 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL =
-  process.env.SUPABASE_URL;
-
+const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const ADMIN_EMAIL =
-  "malvisdabz@gmail.com";
+const ADMIN_EMAIL = "malvisdabz@gmail.com";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization",
   "Access-Control-Allow-Methods":
-    "GET, POST, PATCH, OPTIONS"
+    "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Max-Age": "86400",
 };
 
 function json(data, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...headers,
-        "Content-Type":
-          "application/json"
-      }
-    }
-  );
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...headers,
+      "Content-Type": "application/json",
+    },
+  });
 }
 
-function supabase() {
+function createSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error(
+      "Supabase server environment variables are missing."
+    );
+  }
+
   return createClient(
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     }
   );
 }
 
-async function getUser(req) {
-
-  const authorization =
-    req.headers.get(
-      "Authorization"
-    ) || "";
+/**
+ * Normalize account roles used by the platform.
+ */
+function normalizeRole(role) {
+  const value = String(role || "")
+    .trim()
+    .toLowerCase();
 
   if (
-    !authorization.startsWith(
-      "Bearer "
-    )
+    value === "seller" ||
+    value === "business" ||
+    value === "business_owner" ||
+    value === "business-owner"
   ) {
+    return "seller";
+  }
+
+  if (value === "admin") {
+    return "admin";
+  }
+
+  return "buyer";
+}
+
+/**
+ * Admin is identified server-side by email.
+ */
+function getRole(user) {
+  const email = String(user?.email || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    email &&
+    email === ADMIN_EMAIL.toLowerCase()
+  ) {
+    return "admin";
+  }
+
+  return normalizeRole(
+    user?.app_metadata?.role ||
+      user?.user_metadata?.role ||
+      "buyer"
+  );
+}
+
+/**
+ * Get the authenticated Supabase user.
+ */
+async function getUser(req, db) {
+  const authorization =
+    req.headers.get("Authorization") || "";
+
+  if (!authorization.startsWith("Bearer ")) {
     return null;
   }
 
-  const token =
-    authorization.substring(7);
+  const token = authorization
+    .slice(7)
+    .trim();
+
+  if (!token) {
+    return null;
+  }
 
   const {
     data,
-    error
-  } =
-    await supabase()
-      .auth
-      .getUser(token);
+    error,
+  } = await db.auth.getUser(token);
 
-  if (
-    error ||
-    !data ||
-    !data.user
-  ) {
+  if (error || !data?.user) {
     return null;
   }
 
   return data.user;
 }
 
-function getRole(user) {
-
-  if (
-    (user.email || "")
-      .toLowerCase() ===
-    ADMIN_EMAIL.toLowerCase()
-  ) {
-    return "admin";
-  }
-
-  return (
-    user.user_metadata?.role ||
-    "buyer"
-  );
-}
-
-function canAccess(
+/**
+ * Verify that the current user belongs
+ * to the requested conversation.
+ *
+ * Admin can access admin-involved conversations.
+ */
+function canAccessConversation(
   conversation,
   user,
   role
 ) {
+  if (!conversation || !user) {
+    return false;
+  }
 
   if (role === "admin") {
-    return true;
+    return Boolean(
+      conversation.admin_involved
+    );
   }
 
   return (
-    conversation.buyer_id ===
-      user.id ||
-    conversation.seller_id ===
-      user.id
+    String(conversation.buyer_id || "") ===
+      String(user.id) ||
+    String(conversation.seller_id || "") ===
+      String(user.id)
   );
 }
 
-export default async function handler(
-  req
+/**
+ * Clean text sent by users.
+ */
+function cleanMessage(value) {
+  return String(value || "")
+    .replace(/\u0000/g, "")
+    .trim()
+    .slice(0, 5000);
+}
+
+function cleanId(value) {
+  return String(value || "").trim();
+}
+
+/**
+ * Load one conversation.
+ *
+ * NOTE:
+ * conversation IDs in the existing database
+ * are BIGINT, not UUID.
+ */
+async function getConversation(
+  db,
+  conversationId
 ) {
+  const {
+    data,
+    error,
+  } = await db
+    .from("chat_conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .maybeSingle();
 
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+/**
+ * Update conversation activity time.
+ */
+async function touchConversation(
+  db,
+  conversationId
+) {
+  const {
+    error,
+  } = await db
+    .from("chat_conversations")
+    .update({
+      updated_at:
+        new Date().toISOString(),
+    })
+    .eq("id", conversationId);
+
+  if (error) {
+    console.error(
+      "CHAT CONVERSATION UPDATE ERROR:",
+      error
+    );
+  }
+}
+
+/**
+ * Find an existing conversation between
+ * two participants.
+ */
+async function findConversation(
+  db,
+  user,
+  role,
+  targetId,
+  targetRole
+) {
+  let query = db
+    .from("chat_conversations")
+    .select("*");
+
+  /*
+   * BUYER -> SELLER
+   */
   if (
-    req.method ===
-    "OPTIONS"
+    role === "buyer" &&
+    targetRole === "seller"
   ) {
-    return new Response(
-      "ok",
-      { headers }
-    );
+    const {
+      data,
+      error,
+    } = await query
+      .eq("buyer_id", user.id)
+      .eq("seller_id", targetId)
+      .eq("admin_involved", false)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
   }
 
+  /*
+   * SELLER -> BUYER
+   */
   if (
-    !SUPABASE_URL ||
-    !SUPABASE_SERVICE_ROLE_KEY
+    role === "seller" &&
+    targetRole === "buyer"
   ) {
-    return json(
-      {
-        error:
-          "Supabase server configuration is missing."
-      },
-      500
+    const {
+      data,
+      error,
+    } = await query
+      .eq("buyer_id", targetId)
+      .eq("seller_id", user.id)
+      .eq("admin_involved", false)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+  }
+
+  /*
+   * BUYER -> ADMIN
+   *
+   * One support conversation per buyer.
+   */
+  if (
+    role === "buyer" &&
+    targetRole === "admin"
+  ) {
+    const {
+      data,
+      error,
+    } = await query
+      .eq("buyer_id", user.id)
+      .is("seller_id", null)
+      .eq("admin_involved", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+  }
+
+  /*
+   * SELLER -> ADMIN
+   *
+   * One support conversation per seller.
+   */
+  if (
+    role === "seller" &&
+    targetRole === "admin"
+  ) {
+    const {
+      data,
+      error,
+    } = await query
+      .is("buyer_id", null)
+      .eq("seller_id", user.id)
+      .eq("admin_involved", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+  }
+
+  /*
+   * ADMIN -> BUYER
+   */
+  if (
+    role === "admin" &&
+    targetRole === "buyer"
+  ) {
+    const {
+      data,
+      error,
+    } = await query
+      .eq("buyer_id", targetId)
+      .is("seller_id", null)
+      .eq("admin_involved", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+  }
+
+  /*
+   * ADMIN -> SELLER
+   */
+  if (
+    role === "admin" &&
+    targetRole === "seller"
+  ) {
+    const {
+      data,
+      error,
+    } = await query
+      .is("buyer_id", null)
+      .eq("seller_id", targetId)
+      .eq("admin_involved", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+  }
+
+  return null;
+}
+
+/**
+ * Create a new conversation.
+ */
+async function createConversation(
+  db,
+  user,
+  role,
+  targetId,
+  targetRole
+) {
+  let buyerId = null;
+  let sellerId = null;
+  let adminInvolved = false;
+
+  /*
+   * Buyer -> Seller
+   */
+  if (
+    role === "buyer" &&
+    targetRole === "seller"
+  ) {
+    buyerId = user.id;
+    sellerId = targetId;
+  }
+
+  /*
+   * Seller -> Buyer
+   */
+  else if (
+    role === "seller" &&
+    targetRole === "buyer"
+  ) {
+    buyerId = targetId;
+    sellerId = user.id;
+  }
+
+  /*
+   * Buyer -> Admin
+   */
+  else if (
+    role === "buyer" &&
+    targetRole === "admin"
+  ) {
+    buyerId = user.id;
+    adminInvolved = true;
+  }
+
+  /*
+   * Seller -> Admin
+   */
+  else if (
+    role === "seller" &&
+    targetRole === "admin"
+  ) {
+    sellerId = user.id;
+    adminInvolved = true;
+  }
+
+  /*
+   * Admin -> Buyer
+   */
+  else if (
+    role === "admin" &&
+    targetRole === "buyer"
+  ) {
+    buyerId = targetId;
+    adminInvolved = true;
+  }
+
+  /*
+   * Admin -> Seller
+   */
+  else if (
+    role === "admin" &&
+    targetRole === "seller"
+  ) {
+    sellerId = targetId;
+    adminInvolved = true;
+  }
+
+  else {
+    throw new Error(
+      "Invalid conversation participants."
     );
   }
 
-  const user =
-    await getUser(req);
+  const {
+    data,
+    error,
+  } = await db
+    .from("chat_conversations")
+    .insert({
+      buyer_id: buyerId,
+      seller_id: sellerId,
+      admin_involved:
+        adminInvolved,
+    })
+    .select("*")
+    .single();
 
-  if (!user) {
-    return json(
-      {
-        error:
-          "Please log in before using chat."
-      },
-      401
-    );
+  if (error) {
+    throw error;
   }
 
-  const role =
-    getRole(user);
+  return data;
+}
 
-  const db =
-    supabase();
+/**
+ * Save a message.
+ */
+async function createMessage(
+  db,
+  conversationId,
+  user,
+  role,
+  message
+) {
+  const {
+    data,
+    error,
+  } = await db
+    .from("chat_messages")
+    .insert({
+      conversation_id:
+        conversationId,
+      sender_id: user.id,
+      sender_role: role,
+      message,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await touchConversation(
+    db,
+    conversationId
+  );
+
+  return data;
+}
+
+export default async function handler(req) {
+  /*
+   * CORS
+   */
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers,
+    });
+  }
 
   try {
+    const db = createSupabase();
 
     /*
-     * ==========================================
-     * GET CONVERSATIONS OR MESSAGES
-     * ==========================================
+     * Authentication
      */
+    const user = await getUser(
+      req,
+      db
+    );
 
-    if (
-      req.method === "GET"
-    ) {
+    if (!user) {
+      return json(
+        {
+          success: false,
+          error:
+            "Please log in before using chat.",
+        },
+        401
+      );
+    }
 
-      const url =
-        new URL(req.url);
+    const role = getRole(user);
+
+    /*
+     * ======================================
+     * GET
+     * ======================================
+     *
+     * GET /api/chat
+     *
+     * Returns conversations.
+     *
+     * GET /api/chat?conversation_id=123
+     *
+     * Returns conversation + messages.
+     */
+    if (req.method === "GET") {
+      const url = new URL(req.url);
 
       const conversationId =
-        url.searchParams.get(
-          "conversation_id"
+        cleanId(
+          url.searchParams.get(
+            "conversation_id"
+          )
         );
 
       /*
-       * Get one conversation
+       * --------------------------------------
+       * Single conversation
+       * --------------------------------------
        */
-
       if (conversationId) {
+        const conversation =
+          await getConversation(
+            db,
+            conversationId
+          );
 
-        const {
-          data:
-            conversation,
-          error:
-            conversationError
-        } =
-          await db
-            .from(
-              "chat_conversations"
-            )
-            .select("*")
-            .eq(
-              "id",
-              conversationId
-            )
-            .single();
-
-        if (
-          conversationError ||
-          !conversation
-        ) {
+        if (!conversation) {
           return json(
             {
+              success: false,
               error:
-                "Conversation not found."
+                "Conversation not found.",
             },
             404
           );
         }
 
         if (
-          !canAccess(
+          !canAccessConversation(
             conversation,
             user,
             role
@@ -226,58 +598,41 @@ export default async function handler(
         ) {
           return json(
             {
+              success: false,
               error:
-                "You are not allowed to access this conversation."
+                "You are not allowed to access this conversation.",
             },
             403
           );
         }
 
         const {
-          data:
-            messages,
-          error:
-            messageError
-        } =
-          await db
-            .from(
-              "chat_messages"
-            )
-            .select("*")
-            .eq(
-              "conversation_id",
-              conversationId
-            )
-            .order(
-              "created_at",
-              {
-                ascending: true
-              }
-            );
+          data: messages,
+          error,
+        } = await db
+          .from("chat_messages")
+          .select("*")
+          .eq(
+            "conversation_id",
+            conversationId
+          )
+          .order("created_at", {
+            ascending: true,
+          });
 
-        if (messageError) {
-          return json(
-            {
-              error:
-                messageError.message
-            },
-            500
-          );
+        if (error) {
+          throw error;
         }
 
         /*
-         * Mark messages from other people
+         * Mark messages sent by other users
          * as read.
          */
-
         await db
-          .from(
-            "chat_messages"
-          )
+          .from("chat_messages")
           .update({
             read_at:
-              new Date()
-                .toISOString()
+              new Date().toISOString(),
           })
           .eq(
             "conversation_id",
@@ -293,459 +648,296 @@ export default async function handler(
           );
 
         return json({
+          success: true,
           conversation,
           messages:
-            messages || []
+            messages || [],
         });
       }
 
       /*
-       * Get conversation list
+       * --------------------------------------
+       * Conversation list
+       * --------------------------------------
        */
+      let query = db
+        .from("chat_conversations")
+        .select("*")
+        .order("updated_at", {
+          ascending: false,
+        });
 
-      let query =
-        db
-          .from(
-            "chat_conversations"
-          )
-          .select("*")
-          .order(
-            "updated_at",
-            {
-              ascending: false
-            }
-          );
-
-      if (
-        role === "buyer"
-      ) {
-
-        query =
-          query.eq(
-            "buyer_id",
-            user.id
-          );
-
-      } else if (
-        role === "seller"
-      ) {
-
-        query =
-          query.eq(
-            "seller_id",
-            user.id
-          );
-
-      } else {
-
-        query =
-          query.eq(
-            "admin_involved",
-            true
-          );
-      }
-
-      const {
-        data:
-          conversations,
-        error
-      } =
-        await query;
-
-      if (error) {
-        return json(
-          {
-            error:
-              error.message
-          },
-          500
+      /*
+       * Buyer sees conversations
+       * belonging to buyer.
+       */
+      if (role === "buyer") {
+        query = query.eq(
+          "buyer_id",
+          user.id
         );
       }
 
+      /*
+       * Seller sees conversations
+       * belonging to seller.
+       */
+      else if (role === "seller") {
+        query = query.eq(
+          "seller_id",
+          user.id
+        );
+      }
+
+      /*
+       * Admin sees ALL admin conversations.
+       */
+      else if (role === "admin") {
+        query = query.eq(
+          "admin_involved",
+          true
+        );
+      }
+
+      const {
+        data: conversations,
+        error,
+      } = await query;
+
+      if (error) {
+        throw error;
+      }
+
       return json({
+        success: true,
         conversations:
-          conversations || []
+          conversations || [],
       });
     }
 
     /*
-     * ==========================================
-     * CREATE CONVERSATION
-     * ==========================================
+     * ======================================
+     * POST
+     * ======================================
+     *
+     * Create/open conversation.
+     *
+     * Body:
+     * {
+     *   target_id: "USER_ID",
+     *   target_role: "seller",
+     *   message: "Hello"
+     * }
      */
+    if (req.method === "POST") {
+      let body;
 
-    if (
-      req.method === "POST"
-    ) {
-
-      const body =
-        await req.json();
+      try {
+        body = await req.json();
+      } catch {
+        return json(
+          {
+            success: false,
+            error:
+              "Invalid JSON request body.",
+          },
+          400
+        );
+      }
 
       const targetId =
-        String(
-          body.target_id || ""
-        ).trim();
+        cleanId(
+          body?.target_id
+        );
 
       const targetRole =
-        String(
-          body.target_role || ""
-        ).trim();
+        normalizeRole(
+          body?.target_role
+        );
 
       const firstMessage =
-        String(
-          body.message || ""
-        ).trim();
+        cleanMessage(
+          body?.message
+        );
+
+      if (!targetId) {
+        return json(
+          {
+            success: false,
+            error:
+              "Chat recipient is required.",
+          },
+          400
+        );
+      }
 
       if (
-        !targetId ||
         ![
           "buyer",
           "seller",
-          "admin"
-        ].includes(
-          targetRole
-        )
+          "admin",
+        ].includes(targetRole)
       ) {
         return json(
           {
+            success: false,
             error:
-              "A valid chat recipient is required."
+              "Invalid recipient role.",
           },
           400
         );
       }
 
-      if (
-        targetRole === role
-      ) {
+      if (targetRole === role) {
         return json(
           {
+            success: false,
             error:
-              "You cannot chat with yourself."
+              "You cannot start a conversation with yourself.",
           },
           400
         );
       }
-
-      let query =
-        db
-          .from(
-            "chat_conversations"
-          )
-          .select("*");
 
       /*
-       * Buyer <-> Seller
+       * Find existing conversation first.
        */
-
-      if (
-        role === "buyer" &&
-        targetRole === "seller"
-      ) {
-
-        query =
-          query
-            .eq(
-              "buyer_id",
-              user.id
-            )
-            .eq(
-              "seller_id",
-              targetId
-            )
-            .eq(
-              "admin_involved",
-              false
-            );
-
-      } else if (
-        role === "seller" &&
-        targetRole === "buyer"
-      ) {
-
-        query =
-          query
-            .eq(
-              "buyer_id",
-              targetId
-            )
-            .eq(
-              "seller_id",
-              user.id
-            )
-            .eq(
-              "admin_involved",
-              false
-            );
-
-      /*
-       * Buyer/Seller <-> Admin
-       */
-
-      } else if (
-        targetRole === "admin"
-      ) {
-
-        query =
-          query.eq(
-            "admin_involved",
-            true
-          );
-
-        if (
-          role === "buyer"
-        ) {
-          query =
-            query.eq(
-              "buyer_id",
-              user.id
-            );
-        }
-
-        if (
-          role === "seller"
-        ) {
-          query =
-            query.eq(
-              "seller_id",
-              user.id
-            );
-        }
-
-      } else if (
-        role === "admin"
-      ) {
-
-        query =
-          query.eq(
-            "admin_involved",
-            true
-          );
-
-        if (
-          targetRole === "buyer"
-        ) {
-          query =
-            query.eq(
-              "buyer_id",
-              targetId
-            );
-        }
-
-        if (
-          targetRole === "seller"
-        ) {
-          query =
-            query.eq(
-              "seller_id",
-              targetId
-            );
-        }
-
-      } else {
-
-        return json(
-          {
-            error:
-              "Invalid chat participants."
-          },
-          400
-        );
-      }
-
-      const {
-        data:
-          existing
-      } =
-        await query
-          .maybeSingle();
-
       let conversation =
-        existing;
+        await findConversation(
+          db,
+          user,
+          role,
+          targetId,
+          targetRole
+        );
 
       /*
-       * Create conversation
-       * if it doesn't exist.
+       * Create if necessary.
        */
-
       if (!conversation) {
-
-        const newConversation = {
-
-          buyer_id:
-            role === "buyer"
-              ? user.id
-              : targetRole === "buyer"
-                ? targetId
-                : null,
-
-          seller_id:
-            role === "seller"
-              ? user.id
-              : targetRole === "seller"
-                ? targetId
-                : null,
-
-          admin_involved:
-            role === "admin" ||
-            targetRole === "admin"
-        };
-
-        const {
-          data,
-          error
-        } =
-          await db
-            .from(
-              "chat_conversations"
-            )
-            .insert(
-              newConversation
-            )
-            .select()
-            .single();
-
-        if (error) {
-          return json(
-            {
-              error:
-                error.message
-            },
-            500
-          );
-        }
-
         conversation =
-          data;
+          await createConversation(
+            db,
+            user,
+            role,
+            targetId,
+            targetRole
+          );
       }
 
       /*
        * Optional first message.
        */
+      let savedMessage = null;
 
       if (firstMessage) {
-
-        const {
-          error
-        } =
-          await db
-            .from(
-              "chat_messages"
-            )
-            .insert({
-              conversation_id:
-                conversation.id,
-
-              sender_id:
-                user.id,
-
-              sender_role:
-                role,
-
-              message:
-                firstMessage
-            });
-
-        if (error) {
-          return json(
-            {
-              error:
-                error.message
-            },
-            500
-          );
-        }
-
-        await db
-          .from(
-            "chat_conversations"
-          )
-          .update({
-            updated_at:
-              new Date()
-                .toISOString()
-          })
-          .eq(
-            "id",
-            conversation.id
+        savedMessage =
+          await createMessage(
+            db,
+            conversation.id,
+            user,
+            role,
+            firstMessage
           );
       }
 
-      return json({
-        success: true,
-        conversation
-      });
+      return json(
+        {
+          success: true,
+          conversation,
+          message:
+            savedMessage,
+        },
+        201
+      );
     }
 
     /*
-     * ==========================================
-     * SEND MESSAGE
-     * ==========================================
+     * ======================================
+     * PATCH
+     * ======================================
+     *
+     * Send message.
+     *
+     * Body:
+     * {
+     *   conversation_id: 123,
+     *   message: "Hello"
+     * }
      */
+    if (req.method === "PATCH") {
+      let body;
 
-    if (
-      req.method === "PATCH"
-    ) {
-
-      const body =
-        await req.json();
-
-      const conversationId =
-        String(
-          body.conversation_id ||
-            ""
-        ).trim();
-
-      const message =
-        String(
-          body.message || ""
-        ).trim();
-
-      if (
-        !conversationId ||
-        !message
-      ) {
+      try {
+        body = await req.json();
+      } catch {
         return json(
           {
+            success: false,
             error:
-              "Conversation and message are required."
+              "Invalid JSON request body.",
           },
           400
         );
       }
 
-      const {
-        data:
-          conversation,
-        error:
-          conversationError
-      } =
-        await db
-          .from(
-            "chat_conversations"
-          )
-          .select("*")
-          .eq(
-            "id",
-            conversationId
-          )
-          .single();
+      const conversationId =
+        cleanId(
+          body?.conversation_id
+        );
 
-      if (
-        conversationError ||
-        !conversation
-      ) {
+      const message =
+        cleanMessage(
+          body?.message
+        );
+
+      if (!conversationId) {
         return json(
           {
+            success: false,
             error:
-              "Conversation not found."
+              "Conversation ID is required.",
+          },
+          400
+        );
+      }
+
+      if (!message) {
+        return json(
+          {
+            success: false,
+            error:
+              "Message cannot be empty.",
+          },
+          400
+        );
+      }
+
+      /*
+       * Load conversation.
+       */
+      const conversation =
+        await getConversation(
+          db,
+          conversationId
+        );
+
+      if (!conversation) {
+        return json(
+          {
+            success: false,
+            error:
+              "Conversation not found.",
           },
           404
         );
       }
 
+      /*
+       * Security check.
+       */
       if (
-        !canAccess(
+        !canAccessConversation(
           conversation,
           user,
           role
@@ -753,89 +945,59 @@ export default async function handler(
       ) {
         return json(
           {
+            success: false,
             error:
-              "You are not allowed to send messages here."
+              "You are not allowed to send messages in this conversation.",
           },
           403
         );
       }
 
-      const {
-        data:
-          savedMessage,
-        error
-      } =
-        await db
-          .from(
-            "chat_messages"
-          )
-          .insert({
-            conversation_id:
-              conversationId,
-
-            sender_id:
-              user.id,
-
-            sender_role:
-              role,
-
-            message
-          })
-          .select()
-          .single();
-
-      if (error) {
-        return json(
-          {
-            error:
-              error.message
-          },
-          500
-        );
-      }
-
-      await db
-        .from(
-          "chat_conversations"
-        )
-        .update({
-          updated_at:
-            new Date()
-              .toISOString()
-        })
-        .eq(
-          "id",
-          conversationId
+      /*
+       * Save message.
+       */
+      const savedMessage =
+        await createMessage(
+          db,
+          conversationId,
+          user,
+          role,
+          message
         );
 
       return json({
         success: true,
         message:
-          savedMessage
+          savedMessage,
       });
     }
 
+    /*
+     * ======================================
+     * Unsupported method
+     * ======================================
+     */
     return json(
       {
+        success: false,
         error:
-          "Method not allowed."
+          "Method not allowed.",
       },
       405
     );
-
   } catch (error) {
-
     console.error(
-      "CHAT ERROR:",
+      "SALGA CHAT ERROR:",
       error
     );
 
     return json(
       {
+        success: false,
         error:
           error instanceof Error
             ? error.message
-            : "Chat request failed."
+            : "Chat request failed.",
       },
       500
     );
@@ -843,5 +1005,5 @@ export default async function handler(
 }
 
 export const config = {
-  path: "/api/chat"
+  path: "/api/chat",
 };

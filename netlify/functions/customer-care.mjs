@@ -1,147 +1,108 @@
 import OpenAI from "openai";
 
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
-
-function jsonResponse(status, data) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...headers,
-        "Content-Type": "application/json"
-      }
-    }
-  );
-}
-
 export default async (req) => {
-  /*
-   * Allow browser preflight requests.
-   */
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json"
+  };
+
+  // Handle browser CORS request
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
+    return new Response("OK", {
+      status: 200,
       headers
     });
   }
 
-  /*
-   * Customer Care only accepts POST requests.
-   */
+  // Only POST is allowed
   if (req.method !== "POST") {
-    return jsonResponse(405, {
-      success: false,
-      error: "Method not allowed"
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Method not allowed"
+      }),
+      {
+        status: 405,
+        headers
+      }
+    );
   }
 
   try {
-    /*
-     * Get the OpenAI API key from Netlify environment
-     * variables.
-     *
-     * OPENAI_API_KEY is the preferred variable.
-     */
-    const apiKey =
-      Netlify.env.get("OPENAI_API_KEY") ||
-      Netlify.env.get("OPENAI_KEY");
+    // Get API key from Netlify environment
+    const apiKey = Netlify.env.get("OPENAI_API_KEY");
 
     if (!apiKey) {
-      console.error(
-        "CUSTOMER CARE ERROR: OPENAI_API_KEY is not configured."
-      );
+      console.error("OPENAI_API_KEY is missing");
 
-      return jsonResponse(500, {
-        success: false,
-        error:
-          "Customer Care is not configured yet. Please contact the administrator."
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Customer Care is not configured correctly."
+        }),
+        {
+          status: 500,
+          headers
+        }
+      );
     }
 
-    /*
-     * Read the request body safely.
-     */
+    // Read request body safely
     let body;
 
     try {
       body = await req.json();
-    } catch {
-      return jsonResponse(400, {
-        success: false,
-        error: "Invalid request."
-      });
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid request."
+        }),
+        {
+          status: 400,
+          headers
+        }
+      );
     }
 
-    const message =
-      typeof body?.message === "string"
-        ? body.message.trim()
-        : "";
+    const message = String(body?.message || "").trim();
 
     if (!message) {
-      return jsonResponse(400, {
-        success: false,
-        error: "Please enter a message."
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Please enter a message."
+        }),
+        {
+          status: 400,
+          headers
+        }
+      );
     }
 
-    /*
-     * Prevent unnecessarily large requests.
-     */
-    if (message.length > 5000) {
-      return jsonResponse(400, {
-        success: false,
-        error:
-          "Your message is too long. Please shorten it and try again."
-      });
-    }
-
-    /*
-     * Create the OpenAI client using the Netlify
-     * environment variable explicitly.
-     */
     const openai = new OpenAI({
       apiKey
     });
 
-    /*
-     * Ask the AI Customer Care assistant to answer.
-     */
-    const completion =
-      await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-
-        temperature: 0.3,
-
-        max_tokens: 700,
-
-        messages: [
-          {
-            role: "system",
-
-            content: `
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
 You are the official AI Customer Care assistant for SALGA Digital Mart.
 
-SALGA Digital Mart is a Nigerian online marketplace serving businesses and customers throughout Sagbama Local Government Area, Bayelsa State, Nigeria.
+SALGA Digital Mart is an online marketplace serving businesses and customers throughout Sagbama LGA, Bayelsa State, Nigeria.
 
-Your role is CUSTOMER CARE ONLY.
-
-Help buyers and sellers with questions about using the marketplace.
-
-You can help with:
-
+Help buyers and sellers with:
 - Buyer accounts
 - Seller/business accounts
-- Business profiles
 - Login problems
 - Buying products
 - Selling products
-- Uploading products
-- Product listings
+- Product uploads
 - Orders
 - Payments
 - Promotions
@@ -149,102 +110,59 @@ You can help with:
 - Account problems
 - General SALGA Digital Mart questions
 
-CURRENT MARKETPLACE RULES:
+Marketplace commission is 5% of completed transactions.
 
-- Marketplace transaction commission: 5%
-- Promotion/advertising commission: 3%
+Promotion commission is 3%.
 
-IMPORTANT CUSTOMER SAFETY RULES:
+Be friendly, professional and concise.
 
-Never ask a customer for:
-- Passwords
-- OTP codes
-- Bank PINs
-- Card PINs
-- Payment PINs
-- Security codes
-- Private authentication information
+Never ask for passwords, OTPs, PINs, bank PINs or other secret authentication information.
 
-Never invent:
-- Orders
-- Payments
-- Refunds
-- Withdrawals
-- Account balances
-- Transaction information
-- Customer personal information
-- Seller personal information
+Never claim that a payment, refund, order, withdrawal or account change has been completed unless the system has actually confirmed it.
 
-You do not have direct access to a customer's private account, bank account, payment account, order status, or transaction history unless that information is explicitly supplied to you in the conversation.
+If an issue requires an administrator to investigate, explain that it needs to be escalated to the SALGA Digital Mart administration team.
 
-Never claim that an action has been completed unless the system actually confirms it.
-
-If the customer reports an issue that requires manual investigation, tell them that the matter needs to be escalated to the SALGA Digital Mart administration team.
-
-Do not pretend to be a human administrator.
-
-Be polite, friendly, helpful and concise.
-
-Use simple language that is easy for Nigerian buyers and sellers to understand.
-
-If the customer asks something unrelated to SALGA Digital Mart, politely explain that you are the SALGA Digital Mart Customer Care assistant and can help with marketplace-related questions.
-
-If the customer says hello or starts a conversation, greet them naturally and ask how you can help.
-
-If a customer reports that something is not working, first give simple troubleshooting steps. If the problem cannot be solved from the available information, explain that it should be escalated to the administration team.
+Do not invent account, order, payment or transaction information.
 `
-          },
-
-          {
-            role: "user",
-            content: message
-          }
-        ]
-      });
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ]
+    });
 
     const reply =
-      completion?.choices?.[0]?.message?.content
-        ?.trim();
+      completion?.choices?.[0]?.message?.content?.trim() ||
+      "Sorry, I couldn't process your message right now. Please try again.";
 
-    if (!reply) {
-      console.error(
-        "CUSTOMER CARE ERROR: OpenAI returned no response."
-      );
-
-      return jsonResponse(500, {
-        success: false,
-        error:
-          "Customer Care could not generate a response. Please try again."
-      });
-    }
-
-    /*
-     * Successful Customer Care response.
-     */
-    return jsonResponse(200, {
-      success: true,
-      reply
-    });
-
-  } catch (error) {
-    console.error(
-      "CUSTOMER CARE ERROR:",
-      error?.message || error
+    return new Response(
+      JSON.stringify({
+        success: true,
+        reply
+      }),
+      {
+        status: 200,
+        headers
+      }
     );
 
-    /*
-     * Give the frontend a clean JSON response rather
-     * than allowing the request to fail silently.
-     */
-    return jsonResponse(500, {
-      success: false,
-      error:
-        "Customer Care is temporarily unavailable. Please try again shortly."
-    });
+  } catch (error) {
+    console.error("CUSTOMER CARE ERROR:", error);
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Customer Care is temporarily unavailable. Please try again shortly."
+      }),
+      {
+        status: 500,
+        headers
+      }
+    );
   }
 };
 
 export const config = {
-  path: "/api/customer-care",
-  method: "POST"
+  path: "/api/customer-care"
 };

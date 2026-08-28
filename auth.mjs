@@ -16,9 +16,9 @@ const supabase = createClient(
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization",
+    "Content-Type, Authorization, apikey, x-client-info",
   "Access-Control-Allow-Methods":
-    "POST, OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS"
 };
 
 function json(data, status = 200) {
@@ -28,8 +28,7 @@ function json(data, status = 200) {
       status,
       headers: {
         ...headers,
-        "Content-Type":
-          "application/json"
+        "Content-Type": "application/json"
       }
     }
   );
@@ -81,20 +80,17 @@ export default async (req) => {
     }
 
     /*
-     * Supabase Auth requires an email identifier
-     * for this application's password flow.
-     *
-     * We create a private internal email from
-     * the user's phone number.
+     * Internal email used by Supabase Auth
+     * for phone/password accounts.
      */
     const authEmail =
       phone.replace(/\D/g, "") +
       "@users.salgadigitalmart.local";
 
     /*
-     * ------------------------------------------------
+     * ========================================================
      * REGISTER
-     * ------------------------------------------------
+     * ========================================================
      */
     if (action === "register") {
 
@@ -116,19 +112,20 @@ export default async (req) => {
       }
 
       /*
-       * Check whether this phone already exists.
+       * Check whether phone already exists.
        */
-      const { data: existing } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id, phone, role"
-          )
-          .eq(
-            "phone",
-            phone
-          )
-          .maybeSingle();
+      const {
+        data: existing
+      } = await supabase
+        .from("profiles")
+        .select(
+          "id, phone, role"
+        )
+        .eq(
+          "phone",
+          phone
+        )
+        .maybeSingle();
 
       if (existing) {
         return json(
@@ -174,9 +171,12 @@ export default async (req) => {
         authData.user;
 
       /*
-       * Create/update application profile.
+       * Create application profile.
        */
-      const { data: profile, error: profileError } =
+      const {
+        data: profile,
+        error: profileError
+      } =
         await supabase
           .from("profiles")
           .upsert(
@@ -198,10 +198,6 @@ export default async (req) => {
 
       if (profileError) {
 
-        /*
-         * Remove Auth account if profile
-         * creation fails.
-         */
         await supabase.auth.admin.deleteUser(
           user.id
         );
@@ -216,20 +212,28 @@ export default async (req) => {
       }
 
       /*
-       * Seller-specific business data.
+       * ======================================================
+       * CREATE SELLER BUSINESS PROFILE
+       * ======================================================
+       *
+       * Every newly registered seller gets a business record.
        */
       if (role === "seller") {
 
-        const { error: businessError } =
+        const {
+          error: businessError
+        } =
           await supabase
             .from("businesses")
             .insert({
               owner_id:
                 user.id,
+
               business_name:
                 String(
                   body.businessName
                 ).trim(),
+
               status:
                 "active"
             });
@@ -251,8 +255,7 @@ export default async (req) => {
       }
 
       /*
-       * Sign the user in so the frontend
-       * receives a real Supabase session.
+       * Sign the user in.
        */
       const {
         data: sessionData,
@@ -275,6 +278,7 @@ export default async (req) => {
 
       return json({
         success: true,
+
         user: {
           id: user.id,
           phone,
@@ -282,15 +286,16 @@ export default async (req) => {
           full_name:
             profile.full_name || ""
         },
+
         session:
           sessionData.session
       });
     }
 
     /*
-     * ------------------------------------------------
+     * ========================================================
      * LOGIN
-     * ------------------------------------------------
+     * ========================================================
      */
 
     const {
@@ -315,7 +320,13 @@ export default async (req) => {
     const authUser =
       sessionData.user;
 
-    const { data: profile, error: profileError } =
+    /*
+     * Get profile.
+     */
+    const {
+      data: profile,
+      error: profileError
+    } =
       await supabase
         .from("profiles")
         .select("*")
@@ -335,6 +346,10 @@ export default async (req) => {
       );
     }
 
+    /*
+     * Make sure selected account type
+     * matches the actual account.
+     */
     if (profile.role !== role) {
       return json(
         {
@@ -345,18 +360,121 @@ export default async (req) => {
       );
     }
 
+    /*
+     * ========================================================
+     * IMPORTANT SELLER FIX
+     * ========================================================
+     *
+     * If an existing seller was registered before the
+     * business-profile creation was working, create the
+     * missing business automatically during login.
+     *
+     * This prevents:
+     *
+     * "Create your business profile before adding products"
+     *
+     * for existing legitimate seller accounts.
+     */
+    if (profile.role === "seller") {
+
+      const {
+        data: business,
+        error: businessLookupError
+      } =
+        await supabase
+          .from("businesses")
+          .select(
+            "id, business_name, status"
+          )
+          .eq(
+            "owner_id",
+            authUser.id
+          )
+          .limit(1)
+          .maybeSingle();
+
+      if (businessLookupError) {
+
+        console.error(
+          "BUSINESS LOOKUP ERROR:",
+          businessLookupError
+        );
+
+        return json(
+          {
+            error:
+              businessLookupError.message
+          },
+          500
+        );
+      }
+
+      /*
+       * Business does not exist.
+       * Create it automatically.
+       */
+      if (!business) {
+
+        const businessName =
+          String(
+            profile.full_name ||
+            "My Business"
+          ).trim();
+
+        const {
+          error: createBusinessError
+        } =
+          await supabase
+            .from("businesses")
+            .insert({
+              owner_id:
+                authUser.id,
+
+              business_name:
+                businessName,
+
+              status:
+                "active"
+            });
+
+        if (createBusinessError) {
+
+          console.error(
+            "CREATE BUSINESS ERROR:",
+            createBusinessError
+          );
+
+          return json(
+            {
+              error:
+                createBusinessError.message
+            },
+            500
+          );
+        }
+      }
+    }
+
+    /*
+     * Return successful login.
+     */
     return json({
       success: true,
+
       user: {
         id:
           authUser.id,
+
         phone:
           profile.phone,
+
         role:
           profile.role,
+
         full_name:
           profile.full_name || ""
       },
+
       session:
         sessionData.session
     });

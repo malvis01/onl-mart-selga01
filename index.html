@@ -181,9 +181,6 @@ footer{
   color:var(--muted);
   padding:30px;
 }
-
-/* DASHBOARD */
-
 .dashboard-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
@@ -291,6 +288,10 @@ footer{
 .chat-message.mine{
   background:#e3f4f0;
 }
+.chat-message.ai{
+  background:#eef7ff;
+  border-left:4px solid var(--p2);
+}
 .chat-message .time{
   display:block;
   color:var(--muted);
@@ -314,6 +315,29 @@ footer{
   background:#d9efeb;
   color:var(--p);
   font-weight:700;
+}
+.upload-preview{
+  width:100%;
+  max-width:260px;
+  max-height:220px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-top:8px;
+}
+.file-help{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:5px;
+}
+.ai-care{
+  background:#eef7ff;
+  border:1px solid #d8eafa;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.ai-care h3{
+  margin-top:0;
 }
 @media(max-width:650px){
   main{padding:14px}
@@ -371,7 +395,6 @@ footer{
 </div>
 </header>
 
-
 <main>
 
 <!-- =====================================================
@@ -409,7 +432,6 @@ footer{
 
   </div>
 
-
   <div class="panel">
 
     <div class="row">
@@ -432,6 +454,7 @@ footer{
         <option value="Beauty">Beauty</option>
         <option value="Home">Home</option>
         <option value="Services">Services</option>
+        <option value="Other">Other</option>
 
       </select>
 
@@ -450,9 +473,7 @@ footer{
 
 <section id="account" class="hidden">
 
-  <div
-    id="buyerLoginPanel"
-    class="panel form">
+  <div id="buyerLoginPanel" class="panel form">
 
     <h2>Buyer account</h2>
 
@@ -517,11 +538,7 @@ footer{
   </div>
 
 
-  <!-- REAL BUYER DASHBOARD -->
-
-  <div
-    id="buyerDashboard"
-    class="hidden">
+  <div id="buyerDashboard" class="hidden">
 
     <div class="hero">
 
@@ -533,79 +550,51 @@ footer{
 
     </div>
 
-
     <div class="dashboard-grid">
 
       <div class="stat">
         <div class="stat-label">Total orders</div>
-        <div
-          id="buyerTotalOrders"
-          class="stat-value">
-          0
-        </div>
+        <div id="buyerTotalOrders" class="stat-value">0</div>
       </div>
 
       <div class="stat">
         <div class="stat-label">Pending orders</div>
-        <div
-          id="buyerPendingOrders"
-          class="stat-value">
-          0
-        </div>
+        <div id="buyerPendingOrders" class="stat-value">0</div>
       </div>
 
       <div class="stat">
         <div class="stat-label">Completed orders</div>
-        <div
-          id="buyerCompletedOrders"
-          class="stat-value">
-          0
-        </div>
+        <div id="buyerCompletedOrders" class="stat-value">0</div>
       </div>
 
       <div class="stat">
         <div class="stat-label">Total spent</div>
-        <div
-          id="buyerTotalSpent"
-          class="stat-value">
-          ₦0.00
-        </div>
+        <div id="buyerTotalSpent" class="stat-value">₦0.00</div>
       </div>
 
     </div>
-
 
     <div class="panel">
 
       <div class="dashboard-tabs">
 
-        <button
-          class="btn"
-          onclick="buyerTab('orders')">
+        <button class="btn" onclick="buyerTab('orders')">
           My Orders
         </button>
 
-        <button
-          class="btn gray"
-          onclick="buyerTab('transactions')">
+        <button class="btn gray" onclick="buyerTab('transactions')">
           Transactions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="buyerTab('payments')">
+        <button class="btn gray" onclick="buyerTab('payments')">
           Payments
         </button>
 
-        <button
-          class="btn gray"
-          onclick="buyerTab('chat')">
+        <button class="btn gray" onclick="buyerTab('chat')">
           Messages
         </button>
 
-        <button
-          class="btn gray"
-          onclick="buyerTab('profile')">
+        <button class="btn gray" onclick="buyerTab('profile')">
           Profile
         </button>
 
@@ -613,10 +602,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="buyerOrdersTab"
-      class="dashboard-tab panel">
+    <div id="buyerOrdersTab" class="dashboard-tab panel">
 
       <h2>My Orders</h2>
 
@@ -626,10 +612,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="buyerTransactionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="buyerTransactionsTab" class="dashboard-tab panel hidden">
 
       <h2>Transaction History</h2>
 
@@ -639,10 +622,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="buyerPaymentsTab"
-      class="dashboard-tab panel hidden">
+    <div id="buyerPaymentsTab" class="dashboard-tab panel hidden">
 
       <h2>Make Payment</h2>
 
@@ -663,53 +643,26 @@ footer{
 
       </div>
 
-
       <div class="field">
 
         <label>Payment method</label>
 
         <select id="buyerPaymentMethod">
 
-          <option value="paystack">
-            Paystack
-          </option>
-
-          <option value="card">
-            Debit/Credit Card
-          </option>
-
-          <option value="bank_transfer">
-            Bank Transfer
-          </option>
-
-          <option value="ussd">
-            USSD
-          </option>
-
-          <option value="opay">
-            OPay
-          </option>
-
-          <option value="palmpay">
-            PalmPay
-          </option>
-
-          <option value="moniepoint">
-            Moniepoint
-          </option>
-
-          <option value="bank">
-            Nigerian Bank
-          </option>
+          <option value="paystack">Paystack</option>
+          <option value="card">Debit/Credit Card</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="ussd">USSD</option>
+          <option value="opay">OPay</option>
+          <option value="palmpay">PalmPay</option>
+          <option value="moniepoint">Moniepoint</option>
+          <option value="bank">Nigerian Bank</option>
 
         </select>
 
       </div>
 
-
-      <button
-        class="btn"
-        onclick="startPayment()">
+      <button class="btn" onclick="startPayment()">
         Continue to secure payment
       </button>
 
@@ -717,20 +670,13 @@ footer{
 
     </div>
 
-
-    <div
-      id="buyerChatTab"
-      class="dashboard-tab panel hidden">
+    <div id="buyerChatTab" class="dashboard-tab panel hidden">
 
       <h2>Messages</h2>
 
-      <div id="buyerConversations"
-           class="conversations"></div>
+      <div id="buyerConversations" class="conversations"></div>
 
-      <div
-        id="buyerChatMessages"
-        class="chat-box">
-      </div>
+      <div id="buyerChatMessages" class="chat-box"></div>
 
       <div class="row">
 
@@ -739,9 +685,7 @@ footer{
           placeholder="Write a message..."
           style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px">
 
-        <button
-          class="btn"
-          onclick="sendBuyerMessage()">
+        <button class="btn" onclick="sendBuyerMessage()">
           Send
         </button>
 
@@ -749,10 +693,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="buyerProfileTab"
-      class="dashboard-tab panel hidden">
+    <div id="buyerProfileTab" class="dashboard-tab panel hidden">
 
       <h2>My Profile</h2>
 
@@ -771,9 +712,7 @@ footer{
 
 <section id="seller" class="hidden">
 
-  <div
-    id="sellerLoginPanel"
-    class="panel form">
+  <div id="sellerLoginPanel" class="panel form">
 
     <h2>Business owner account</h2>
 
@@ -810,9 +749,7 @@ footer{
 
     <div class="field">
       <label for="sbank">Bank name</label>
-      <input
-        id="sbank"
-        placeholder="e.g. GTBank">
+      <input id="sbank" placeholder="e.g. GTBank">
     </div>
 
     <div class="field">
@@ -852,11 +789,7 @@ footer{
   </div>
 
 
-  <!-- REAL SELLER DASHBOARD -->
-
-  <div
-    id="sellerDashboard"
-    class="hidden">
+  <div id="sellerDashboard" class="hidden">
 
     <div class="hero">
 
@@ -868,7 +801,6 @@ footer{
 
     </div>
 
-
     <div class="dashboard-grid">
 
       <div class="stat balance-stat">
@@ -877,14 +809,11 @@ footer{
           Available balance
         </div>
 
-        <div
-          id="sellerBalance"
-          class="stat-value">
+        <div id="sellerBalance" class="stat-value">
           ₦0.00
         </div>
 
       </div>
-
 
       <div class="stat">
 
@@ -892,14 +821,11 @@ footer{
           Pending balance
         </div>
 
-        <div
-          id="sellerPendingBalance"
-          class="stat-value">
+        <div id="sellerPendingBalance" class="stat-value">
           ₦0.00
         </div>
 
       </div>
-
 
       <div class="stat">
 
@@ -907,14 +833,11 @@ footer{
           Total sales
         </div>
 
-        <div
-          id="sellerTotalSales"
-          class="stat-value">
+        <div id="sellerTotalSales" class="stat-value">
           ₦0.00
         </div>
 
       </div>
-
 
       <div class="stat commission-stat">
 
@@ -922,14 +845,11 @@ footer{
           5% marketplace commission
         </div>
 
-        <div
-          id="sellerMarketplaceCommission"
-          class="stat-value">
+        <div id="sellerMarketplaceCommission" class="stat-value">
           ₦0.00
         </div>
 
       </div>
-
 
       <div class="stat commission-stat">
 
@@ -937,14 +857,11 @@ footer{
           3% promotion commission
         </div>
 
-        <div
-          id="sellerPromotionCommission"
-          class="stat-value">
+        <div id="sellerPromotionCommission" class="stat-value">
           ₦0.00
         </div>
 
       </div>
-
 
       <div class="stat">
 
@@ -952,14 +869,11 @@ footer{
           Total orders
         </div>
 
-        <div
-          id="sellerOrderCount"
-          class="stat-value">
+        <div id="sellerOrderCount" class="stat-value">
           0
         </div>
 
       </div>
-
 
       <div class="stat">
 
@@ -967,9 +881,7 @@ footer{
           Products
         </div>
 
-        <div
-          id="sellerProductCount"
-          class="stat-value">
+        <div id="sellerProductCount" class="stat-value">
           0
         </div>
 
@@ -977,50 +889,35 @@ footer{
 
     </div>
 
-
     <div class="panel">
 
       <div class="dashboard-tabs">
 
-        <button
-          class="btn"
-          onclick="sellerTab('overview')">
+        <button class="btn" onclick="sellerTab('overview')">
           Overview
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('orders')">
+        <button class="btn gray" onclick="sellerTab('orders')">
           Orders
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('transactions')">
+        <button class="btn gray" onclick="sellerTab('transactions')">
           Transactions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('products')">
+        <button class="btn gray" onclick="sellerTab('products')">
           Products
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('promotions')">
+        <button class="btn gray" onclick="sellerTab('promotions')">
           Promotions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('withdraw')">
+        <button class="btn gray" onclick="sellerTab('withdraw')">
           Withdraw
         </button>
 
-        <button
-          class="btn gray"
-          onclick="sellerTab('chat')">
+        <button class="btn gray" onclick="sellerTab('chat')">
           Messages
         </button>
 
@@ -1028,10 +925,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="sellerOverviewTab"
-      class="dashboard-tab panel">
+    <div id="sellerOverviewTab" class="dashboard-tab panel">
 
       <h2>Business Overview</h2>
 
@@ -1041,10 +935,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="sellerOrdersTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerOrdersTab" class="dashboard-tab panel hidden">
 
       <h2>Customer Orders</h2>
 
@@ -1054,10 +945,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="sellerTransactionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerTransactionsTab" class="dashboard-tab panel hidden">
 
       <h2>Financial Records</h2>
 
@@ -1068,9 +956,7 @@ footer{
     </div>
 
 
-    <div
-      id="sellerProductsTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerProductsTab" class="dashboard-tab panel hidden">
 
       <h2>My Products</h2>
 
@@ -1080,21 +966,31 @@ footer{
 
       <h3>Upload product</h3>
 
+      <div id="productUploadStatus"></div>
+
       <div class="field">
-        <label>Product name</label>
-        <input id="productName">
+        <label for="productName">
+          Product name
+        </label>
+        <input id="productName" type="text">
       </div>
 
       <div class="field">
-        <label>Price (NGN)</label>
+        <label for="productPrice">
+          Price (NGN)
+        </label>
         <input
           id="productPrice"
           type="number"
-          min="1">
+          min="1"
+          step="1">
       </div>
 
       <div class="field">
-        <label>Category</label>
+        <label for="productCategory">
+          Category
+        </label>
+
         <select id="productCategory">
           <option value="Fashion">Fashion</option>
           <option value="Electronics">Electronics</option>
@@ -1104,22 +1000,61 @@ footer{
           <option value="Services">Services</option>
           <option value="Other">Other</option>
         </select>
+
       </div>
 
       <div class="field">
-        <label>Description</label>
+        <label for="productDescription">
+          Description
+        </label>
+
         <textarea id="productDescription"></textarea>
       </div>
 
       <div class="field">
-        <label>Image URL</label>
+
+        <label for="productImageFile">
+          Product image
+        </label>
+
+        <input
+          id="productImageFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onchange="previewProductImage()">
+
+        <div class="file-help">
+          Upload a JPG, PNG, WEBP or GIF image. Maximum recommended size: 5 MB.
+        </div>
+
+        <img
+          id="productImagePreview"
+          class="upload-preview hidden"
+          alt="Product image preview">
+
+      </div>
+
+      <div class="field">
+
+        <label for="productImage">
+          Or image URL
+        </label>
+
         <input
           id="productImage"
           type="url"
-          placeholder="https://...">
+          placeholder="https://..."
+          oninput="clearProductFileIfUrlUsed()">
+
+        <div class="file-help">
+          A real uploaded image file is preferred. The backend stores uploaded
+          images in Supabase Storage.
+        </div>
+
       </div>
 
       <button
+        id="uploadProductBtn"
         class="btn"
         onclick="uploadProduct()">
         Upload Product
@@ -1128,14 +1063,12 @@ footer{
     </div>
 
 
-    <div
-      id="sellerPromotionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerPromotionsTab" class="dashboard-tab panel hidden">
 
       <h2>Promote a Product</h2>
 
       <p class="muted">
-        Promotion/advertising transactions are recorded separately.
+        Promotion and advertising transactions are recorded separately.
         The SALGA platform promotion commission is 3%.
       </p>
 
@@ -1146,9 +1079,7 @@ footer{
     </div>
 
 
-    <div
-      id="sellerWithdrawTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerWithdrawTab" class="dashboard-tab panel hidden">
 
       <h2>Withdraw Business Balance</h2>
 
@@ -1178,21 +1109,13 @@ footer{
     </div>
 
 
-    <div
-      id="sellerChatTab"
-      class="dashboard-tab panel hidden">
+    <div id="sellerChatTab" class="dashboard-tab panel hidden">
 
       <h2>Customer Messages</h2>
 
-      <div
-        id="sellerConversations"
-        class="conversations">
-      </div>
+      <div id="sellerConversations" class="conversations"></div>
 
-      <div
-        id="sellerChatMessages"
-        class="chat-box">
-      </div>
+      <div id="sellerChatMessages" class="chat-box"></div>
 
       <div class="row">
 
@@ -1227,8 +1150,43 @@ footer{
     <h2>💬 SALGA Customer Care</h2>
 
     <p class="muted">
-      Your customer-care messages are sent through the platform.
+      Get help with buying, selling, orders, payments, accounts,
+      promotions, or contacting a business.
     </p>
+
+    <div class="ai-care">
+
+      <h3>🤖 SALGA AI Customer Care</h3>
+
+      <p class="muted">
+        Ask a question and the customer-care assistant will help you
+        with the SALGA Digital Mart platform.
+      </p>
+
+      <div class="field">
+
+        <label for="aiCareInput">
+          What do you need help with?
+        </label>
+
+        <textarea
+          id="aiCareInput"
+          placeholder="For example: How do I buy a product? How can I upload my product? I have a problem with my order..."></textarea>
+
+      </div>
+
+      <button
+        id="aiCareButton"
+        class="btn"
+        onclick="askAICustomerCare()">
+        Ask Customer Care
+      </button>
+
+      <div id="aiCareResponse"></div>
+
+    </div>
+
+    <h3>Contact Platform Customer Care</h3>
 
     <div
       id="careChat"
@@ -1262,9 +1220,7 @@ footer{
 
 <section id="admin" class="hidden">
 
-  <div
-    id="adminLoginPanel"
-    class="panel form">
+  <div id="adminLoginPanel" class="panel form">
 
     <h2>Admin access</h2>
 
@@ -1309,11 +1265,7 @@ footer{
   </div>
 
 
-  <!-- REAL ADMIN DASHBOARD -->
-
-  <div
-    id="adminDashboard"
-    class="hidden">
+  <div id="adminDashboard" class="hidden">
 
     <div class="hero">
 
@@ -1325,155 +1277,87 @@ footer{
 
     </div>
 
-
     <div class="dashboard-grid">
 
       <div class="stat">
-        <div class="stat-label">
-          Registered buyers
-        </div>
-        <div
-          id="adminBuyers"
-          class="stat-value">
-          0
-        </div>
+        <div class="stat-label">Registered buyers</div>
+        <div id="adminBuyers" class="stat-value">0</div>
       </div>
 
       <div class="stat">
-        <div class="stat-label">
-          Business owners
-        </div>
-        <div
-          id="adminBusinesses"
-          class="stat-value">
-          0
-        </div>
+        <div class="stat-label">Business owners</div>
+        <div id="adminBusinesses" class="stat-value">0</div>
       </div>
 
       <div class="stat">
-        <div class="stat-label">
-          Products
-        </div>
-        <div
-          id="adminProducts"
-          class="stat-value">
-          0
-        </div>
+        <div class="stat-label">Products</div>
+        <div id="adminProducts" class="stat-value">0</div>
       </div>
 
       <div class="stat">
-        <div class="stat-label">
-          Orders
-        </div>
-        <div
-          id="adminOrders"
-          class="stat-value">
-          0
-        </div>
+        <div class="stat-label">Orders</div>
+        <div id="adminOrders" class="stat-value">0</div>
       </div>
 
       <div class="stat">
-        <div class="stat-label">
-          Transaction volume
-        </div>
-        <div
-          id="adminTransactionVolume"
-          class="stat-value">
-          ₦0.00
-        </div>
+        <div class="stat-label">Transaction volume</div>
+        <div id="adminTransactionVolume" class="stat-value">₦0.00</div>
       </div>
 
       <div class="stat commission-stat">
-        <div class="stat-label">
-          5% transaction commission
-        </div>
-        <div
-          id="adminFivePercent"
-          class="stat-value">
-          ₦0.00
-        </div>
+        <div class="stat-label">5% transaction commission</div>
+        <div id="adminFivePercent" class="stat-value">₦0.00</div>
       </div>
 
       <div class="stat commission-stat">
-        <div class="stat-label">
-          3% promotion/ads commission
-        </div>
-        <div
-          id="adminThreePercent"
-          class="stat-value">
-          ₦0.00
-        </div>
+        <div class="stat-label">3% promotion/ads commission</div>
+        <div id="adminThreePercent" class="stat-value">₦0.00</div>
       </div>
 
       <div class="stat balance-stat">
-        <div class="stat-label">
-          Total platform commission
-        </div>
-        <div
-          id="adminTotalCommission"
-          class="stat-value">
-          ₦0.00
-        </div>
+        <div class="stat-label">Total platform commission</div>
+        <div id="adminTotalCommission" class="stat-value">₦0.00</div>
       </div>
 
     </div>
-
 
     <div class="panel">
 
       <div class="dashboard-tabs">
 
-        <button
-          class="btn"
-          onclick="adminTab('overview')">
+        <button class="btn" onclick="adminTab('overview')">
           Overview
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('users')">
+        <button class="btn gray" onclick="adminTab('users')">
           Users
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('businesses')">
+        <button class="btn gray" onclick="adminTab('businesses')">
           Businesses
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('orders')">
+        <button class="btn gray" onclick="adminTab('orders')">
           Orders
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('transactions')">
+        <button class="btn gray" onclick="adminTab('transactions')">
           Transactions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('commissions')">
+        <button class="btn gray" onclick="adminTab('commissions')">
           Commissions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('promotions')">
+        <button class="btn gray" onclick="adminTab('promotions')">
           Promotions
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('withdrawals')">
+        <button class="btn gray" onclick="adminTab('withdrawals')">
           Withdrawals
         </button>
 
-        <button
-          class="btn gray"
-          onclick="adminTab('chat')">
+        <button class="btn gray" onclick="adminTab('chat')">
           Customer Care
         </button>
 
@@ -1481,10 +1365,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminOverviewTab"
-      class="dashboard-tab panel">
+    <div id="adminOverviewTab" class="dashboard-tab panel">
 
       <h2>Platform Overview</h2>
 
@@ -1492,10 +1373,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminUsersTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminUsersTab" class="dashboard-tab panel hidden">
 
       <h2>Registered Users</h2>
 
@@ -1505,10 +1383,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminBusinessesTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminBusinessesTab" class="dashboard-tab panel hidden">
 
       <h2>Business Owners</h2>
 
@@ -1518,10 +1393,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminOrdersTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminOrdersTab" class="dashboard-tab panel hidden">
 
       <h2>All Orders</h2>
 
@@ -1531,10 +1403,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminTransactionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminTransactionsTab" class="dashboard-tab panel hidden">
 
       <h2>All Transactions</h2>
 
@@ -1544,10 +1413,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminCommissionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminCommissionsTab" class="dashboard-tab panel hidden">
 
       <h2>Platform Commissions</h2>
 
@@ -1559,9 +1425,7 @@ footer{
             5% marketplace commission
           </div>
 
-          <div
-            id="commission5Display"
-            class="stat-value">
+          <div id="commission5Display" class="stat-value">
             ₦0.00
           </div>
 
@@ -1573,9 +1437,7 @@ footer{
             3% promotion/ads commission
           </div>
 
-          <div
-            id="commission3Display"
-            class="stat-value">
+          <div id="commission3Display" class="stat-value">
             ₦0.00
           </div>
 
@@ -1587,9 +1449,7 @@ footer{
             Total commission
           </div>
 
-          <div
-            id="commissionTotalDisplay"
-            class="stat-value">
+          <div id="commissionTotalDisplay" class="stat-value">
             ₦0.00
           </div>
 
@@ -1601,10 +1461,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminPromotionsTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminPromotionsTab" class="dashboard-tab panel hidden">
 
       <h2>Promotion & Advertising</h2>
 
@@ -1614,10 +1471,7 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminWithdrawalsTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminWithdrawalsTab" class="dashboard-tab panel hidden">
 
       <h2>Commission Withdrawals</h2>
 
@@ -1690,22 +1544,13 @@ footer{
 
     </div>
 
-
-    <div
-      id="adminChatTab"
-      class="dashboard-tab panel hidden">
+    <div id="adminChatTab" class="dashboard-tab panel hidden">
 
       <h2>Customer Care</h2>
 
-      <div
-        id="adminConversations"
-        class="conversations">
-      </div>
+      <div id="adminConversations" class="conversations"></div>
 
-      <div
-        id="adminChatMessages"
-        class="chat-box">
-      </div>
+      <div id="adminChatMessages" class="chat-box"></div>
 
       <div class="row">
 
@@ -1729,7 +1574,6 @@ footer{
 </section>
 
 </main>
-
 
 <footer>
   SALGA Digital Mart • 5% marketplace commission • 3% promotion/ads commission
@@ -1867,10 +1711,17 @@ function status(id,message,type="error"){
 
 async function api(path,options={}){
 
+  const isFormData =
+    options.body instanceof FormData;
+
   const headers = {
-    "Content-Type":"application/json",
     ...(options.headers || {})
   };
+
+  if(!isFormData){
+    headers["Content-Type"] =
+      "application/json";
+  }
 
   if(session?.access_token){
 
@@ -1906,7 +1757,7 @@ async function api(path,options={}){
   }catch(error){
 
     throw new Error(
-      "Unable to connect to the server."
+      "Unable to connect to the server. Please check your internet connection."
     );
 
   }
@@ -1997,6 +1848,10 @@ async function loadProducts(){
           " " +
           (
             product.category || ""
+          ) +
+          " " +
+          (
+            product.business_name || ""
           );
 
         return (
@@ -2030,6 +1885,7 @@ async function loadProducts(){
         const image =
           product.image_url ||
           product.image ||
+          product.imageUrl ||
           "";
 
         return `
@@ -2042,9 +1898,23 @@ async function loadProducts(){
                   <img
                     src="${esc(image)}"
                     alt="${esc(product.name || "Product")}"
+                    loading="lazy"
                     onerror="this.style.display='none'">
                 `
-                : ""
+                : `
+                  <div
+                    style="
+                      height:160px;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#e9eeee;
+                      border-radius:10px;
+                      color:#68727d;
+                      margin-bottom:10px">
+                    No image
+                  </div>
+                `
             }
 
             <span class="tag">
@@ -2587,13 +2457,6 @@ async function startPayment(){
           })
         }
       );
-
-    /*
-     * We only redirect when the backend
-     * supplies an actual payment URL.
-     * The frontend never pretends that
-     * a payment was successful.
-     */
 
     if(data.authorization_url){
 
@@ -3320,9 +3183,34 @@ function renderSellerProducts(products){
   }
 
   box.innerHTML =
-    products.map(product => `
+    products.map(product => {
+
+      const image =
+        product.image_url ||
+        product.image ||
+        product.imageUrl ||
+        "";
+
+      return `
 
       <div class="record">
+
+        ${
+          image
+            ? `
+              <img
+                src="${esc(image)}"
+                alt="${esc(product.name || "Product")}"
+                style="
+                  width:100%;
+                  max-width:180px;
+                  height:120px;
+                  object-fit:cover;
+                  border-radius:9px;
+                  margin-bottom:8px">
+            `
+            : ""
+        }
 
         <div class="record-title">
           ${esc(product.name)}
@@ -3343,14 +3231,14 @@ function renderSellerProducts(products){
         </div>
 
         <span class="tag">
-          ${product.approved === false
-            ? "Awaiting approval"
-            : "Active"}
+          Active
         </span>
 
       </div>
 
-    `).join("");
+      `;
+
+    }).join("");
 
 }
 
@@ -3437,6 +3325,105 @@ async function requestPromotion(productId){
 
 
 /* =========================================================
+   PRODUCT IMAGE PREVIEW
+========================================================= */
+
+function previewProductImage(){
+
+  const file =
+    $("productImageFile")?.files?.[0];
+
+  const preview =
+    $("productImagePreview");
+
+  if(!preview){
+    return;
+  }
+
+  if(!file){
+
+    preview.classList.add("hidden");
+    preview.removeAttribute("src");
+
+    return;
+
+  }
+
+  if(!file.type.startsWith("image/")){
+
+    alert(
+      "Please select an image file."
+    );
+
+    $("productImageFile").value = "";
+    preview.classList.add("hidden");
+
+    return;
+
+  }
+
+  const maxSize =
+    5 * 1024 * 1024;
+
+  if(file.size > maxSize){
+
+    alert(
+      "The image is too large. Please select an image smaller than 5 MB."
+    );
+
+    $("productImageFile").value = "";
+    preview.classList.add("hidden");
+
+    return;
+
+  }
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(event){
+
+      preview.src =
+        event.target.result;
+
+      preview.classList.remove("hidden");
+
+    };
+
+  reader.readAsDataURL(file);
+
+}
+
+
+function clearProductFileIfUrlUsed(){
+
+  const url =
+    $("productImage")?.value.trim();
+
+  if(
+    url &&
+    $("productImageFile")
+  ){
+
+    $("productImageFile").value = "";
+
+    if($("productImagePreview")){
+
+      $("productImagePreview")
+        .classList.add("hidden");
+
+      $("productImagePreview")
+        .removeAttribute("src");
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
    PRODUCT UPLOAD
 ========================================================= */
 
@@ -3456,47 +3443,213 @@ async function uploadProduct(){
   const description =
     $("productDescription").value.trim();
 
-  const image =
+  const imageUrl =
     $("productImage").value.trim();
 
-  if(!name || !price || price <= 0){
+  const imageFile =
+    $("productImageFile")?.files?.[0] ||
+    null;
 
-    alert(
-      "Product name and valid price are required."
+  if(!me){
+
+    status(
+      "productUploadStatus",
+      "Please log in as a business owner before uploading a product."
     );
 
     return;
 
   }
 
-  try{
+  if(
+    me.role !== "seller" &&
+    me.role !== "business"
+  ){
 
-    const data =
-      await api(
-        "products",
-        {
-          method:"POST",
-          body:JSON.stringify({
+    status(
+      "productUploadStatus",
+      "Only business owners can upload products."
+    );
 
-            action:"create",
+    return;
 
-            name,
+  }
 
-            price,
+  if(!name){
 
-            category,
+    status(
+      "productUploadStatus",
+      "Product name is required."
+    );
 
-            description,
+    return;
 
-            image_url:image
+  }
 
-          })
-        }
+  if(!price || price <= 0){
+
+    status(
+      "productUploadStatus",
+      "Enter a valid product price."
+    );
+
+    return;
+
+  }
+
+  if(!imageFile && !imageUrl){
+
+    status(
+      "productUploadStatus",
+      "Please upload a product image or provide an image URL."
+    );
+
+    return;
+
+  }
+
+  if(imageFile){
+
+    if(!imageFile.type.startsWith("image/")){
+
+      status(
+        "productUploadStatus",
+        "The selected file is not a valid image."
       );
 
-    alert(
+      return;
+
+    }
+
+    if(imageFile.size > 5 * 1024 * 1024){
+
+      status(
+        "productUploadStatus",
+        "The product image must be 5 MB or smaller."
+      );
+
+      return;
+
+    }
+
+  }
+
+  const button =
+    $("uploadProductBtn");
+
+  if(button){
+    button.disabled = true;
+    button.textContent =
+      imageFile
+        ? "Uploading image and product..."
+        : "Uploading product...";
+  }
+
+  status(
+    "productUploadStatus",
+    imageFile
+      ? "Uploading the product image to secure storage..."
+      : "Saving product...",
+    "success"
+  );
+
+  try{
+
+    let data;
+
+    /*
+     * When a file is selected we use multipart/form-data.
+     * The /api/products backend is responsible for putting
+     * the image into Supabase Storage and saving the public
+     * image URL with the product.
+     */
+
+    if(imageFile){
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "action",
+        "create"
+      );
+
+      formData.append(
+        "name",
+        name
+      );
+
+      formData.append(
+        "price",
+        String(price)
+      );
+
+      formData.append(
+        "category",
+        category
+      );
+
+      formData.append(
+        "description",
+        description
+      );
+
+      formData.append(
+        "image",
+        imageFile,
+        imageFile.name
+      );
+
+      data =
+        await api(
+          "products",
+          {
+            method:"POST",
+            body:formData
+          }
+        );
+
+    }else{
+
+      data =
+        await api(
+          "products",
+          {
+            method:"POST",
+            body:JSON.stringify({
+
+              action:"create",
+
+              name,
+
+              price,
+
+              category,
+
+              description,
+
+              image_url:imageUrl
+
+            })
+          }
+        );
+
+    }
+
+    if(data.success === false){
+
+      throw new Error(
+        data.error ||
+        "Product upload failed."
+      );
+
+    }
+
+    status(
+      "productUploadStatus",
       data.message ||
-      "Product submitted successfully."
+      "Product uploaded successfully and is now available in the marketplace.",
+      "success"
     );
 
     $("productName").value = "";
@@ -3504,11 +3657,47 @@ async function uploadProduct(){
     $("productDescription").value = "";
     $("productImage").value = "";
 
-    loadSellerDashboard();
+    if($("productImageFile")){
+      $("productImageFile").value = "";
+    }
+
+    if($("productImagePreview")){
+
+      $("productImagePreview")
+        .classList.add("hidden");
+
+      $("productImagePreview")
+        .removeAttribute("src");
+
+    }
+
+    /*
+     * Reload immediately so the seller sees the new product
+     * and the Shop receives the new product without waiting.
+     */
+
+    await loadSellerDashboard();
+
+    await loadProducts();
 
   }catch(error){
 
-    alert(error.message);
+    status(
+      "productUploadStatus",
+      error.message ||
+      "Product upload failed."
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "Upload Product";
+
+    }
 
   }
 
@@ -3607,6 +3796,8 @@ async function sellerWithdrawal(){
       "Withdrawal request submitted.",
       "success"
     );
+
+    $("sellerWithdrawAmount").value = "";
 
     loadSellerDashboard();
 
@@ -4578,7 +4769,7 @@ function renderConversations(role,list){
       <div
         class="conversation"
         onclick="openConversation(
-          '${role}',
+          '${esc(role)}',
           '${esc(conversation.id)}'
         )">
 
@@ -4686,17 +4877,26 @@ function renderMessages(box,messages){
         me?.id &&
         message.sender_id === me.id;
 
+      const isAI =
+        message.sender_type === "ai" ||
+        message.role === "assistant" ||
+        message.is_ai === true;
+
       return `
 
-        <div class="chat-message ${mine ? "mine" : ""}">
+        <div class="chat-message
+          ${mine ? "mine" : ""}
+          ${isAI ? "ai" : ""}">
 
           <strong>
             ${esc(
               message.sender_name ||
               (
-                mine
-                  ? "You"
-                  : "User"
+                isAI
+                  ? "SALGA AI Customer Care"
+                  : mine
+                    ? "You"
+                    : "User"
               )
             )}
           </strong>
@@ -4704,6 +4904,7 @@ function renderMessages(box,messages){
           <div>
             ${esc(
               message.message ||
+              message.content ||
               ""
             )}
           </div>
@@ -4822,7 +5023,134 @@ function sendAdminMessage(){
 
 
 /* =========================================================
-   CUSTOMER CARE
+   AI CUSTOMER CARE
+========================================================= */
+
+async function askAICustomerCare(){
+
+  const input =
+    $("aiCareInput");
+
+  const output =
+    $("aiCareResponse");
+
+  const button =
+    $("aiCareButton");
+
+  const question =
+    input?.value.trim();
+
+  if(!question){
+
+    status(
+      "aiCareResponse",
+      "Please type your question first."
+    );
+
+    return;
+
+  }
+
+  if(button){
+
+    button.disabled = true;
+
+    button.textContent =
+      "Customer Care is thinking...";
+
+  }
+
+  status(
+    "aiCareResponse",
+    "Connecting to SALGA Customer Care...",
+    "success"
+  );
+
+  try{
+
+    /*
+     * The backend handles the AI provider and keeps
+     * private AI credentials away from the browser.
+     */
+
+    const data =
+      await api(
+        "chat",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"customer_care_ai",
+
+            message:question,
+
+            context:{
+              platform:"SALGA Digital Mart",
+              role:me?.role || "guest",
+              user_id:me?.id || null
+            }
+
+          })
+        }
+      );
+
+    const answer =
+      data.answer ||
+      data.response ||
+      data.message ||
+      data.reply;
+
+    if(!answer){
+
+      throw new Error(
+        "Customer Care did not return an answer."
+      );
+
+    }
+
+    output.innerHTML =
+      `<div class="chat-message ai">
+
+        <strong>
+          SALGA AI Customer Care
+        </strong>
+
+        <div>
+          ${esc(answer)}
+        </div>
+
+        <span class="time">
+          Just now
+        </span>
+
+      </div>`;
+
+  }catch(error){
+
+    status(
+      "aiCareResponse",
+      error.message ||
+      "Unable to reach AI Customer Care right now."
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "Ask Customer Care";
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   CUSTOMER CARE CHAT
 ========================================================= */
 
 async function loadCare(){
@@ -4838,7 +5166,7 @@ async function loadCare(){
 
     box.innerHTML =
       `<div class="notice">
-        Please log in to send and receive customer-care messages.
+        Please log in to send and receive platform customer-care messages.
       </div>`;
 
     return;
@@ -4952,6 +5280,10 @@ function logout(){
   localStorage.removeItem("me");
   localStorage.removeItem("session");
   localStorage.removeItem("adminToken");
+
+  activeBuyerConversation = null;
+  activeSellerConversation = null;
+  activeAdminConversation = null;
 
   updateHeader();
 

@@ -43,6 +43,10 @@ function json(data, status = 200) {
   );
 }
 
+function clean(value) {
+  return String(value ?? "").trim();
+}
+
 async function getUser(request) {
   const authorization =
     request.headers.get("authorization");
@@ -72,18 +76,11 @@ async function getUser(request) {
   return data.user;
 }
 
-function clean(value) {
-  return String(value ?? "").trim();
-}
-
-/*
-=========================================================
-GET CONVERSATION MESSAGES
-=========================================================
-*/
-
 async function getMessages(conversationId) {
-  const { data, error } = await supabase
+  const {
+    data,
+    error
+  } = await supabase
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
@@ -96,12 +93,6 @@ async function getMessages(conversationId) {
   return data || [];
 }
 
-/*
-=========================================================
-SEND MESSAGE
-=========================================================
-*/
-
 async function sendMessage({
   conversationId,
   senderId,
@@ -111,24 +102,21 @@ async function sendMessage({
   const text = clean(message);
 
   if (!conversationId) {
-    throw new Error(
-      "conversation_id is required."
-    );
+    throw new Error("conversation_id is required.");
   }
 
   if (!senderId) {
-    throw new Error(
-      "sender_id is required."
-    );
+    throw new Error("sender_id is required.");
   }
 
   if (!text) {
-    throw new Error(
-      "Message cannot be empty."
-    );
+    throw new Error("Message cannot be empty.");
   }
 
-  const { data, error } = await supabase
+  const {
+    data,
+    error
+  } = await supabase
     .from("messages")
     .insert({
       conversation_id: conversationId,
@@ -141,21 +129,15 @@ async function sendMessage({
 
   if (error) throw error;
 
-  /*
-   * Update conversation timestamp if the
-   * conversations table exists.
-   */
-  const { error: updateError } = await supabase
+  const {
+    error: updateError
+  } = await supabase
     .from("chat_conversations")
     .update({
       updated_at: new Date().toISOString()
     })
     .eq("id", conversationId);
 
-  /*
-   * Do not fail the actual message if the
-   * timestamp update is unavailable.
-   */
   if (updateError) {
     console.warn(
       "Conversation timestamp update skipped:",
@@ -165,12 +147,6 @@ async function sendMessage({
 
   return data;
 }
-
-/*
-=========================================================
-CREATE OR FIND BUYER / SELLER CONVERSATION
-=========================================================
-*/
 
 async function getOrCreateConversation({
   buyerId,
@@ -239,34 +215,32 @@ async function getOrCreateConversation({
   return data;
 }
 
-/*
-=========================================================
-GET USER CONVERSATIONS
-=========================================================
-*/
-
 async function getUserConversations(user) {
-  const { data: buyerConversations, error: buyerError } =
-    await supabase
-      .from("chat_conversations")
-      .select("*")
-      .eq("buyer_id", user.id)
-      .order("updated_at", {
-        ascending: false
-      });
+  const {
+    data: buyerConversations,
+    error: buyerError
+  } = await supabase
+    .from("chat_conversations")
+    .select("*")
+    .eq("buyer_id", user.id)
+    .order("updated_at", {
+      ascending: false
+    });
 
   if (buyerError) {
     throw buyerError;
   }
 
-  const { data: sellerConversations, error: sellerError } =
-    await supabase
-      .from("chat_conversations")
-      .select("*")
-      .eq("seller_id", user.id)
-      .order("updated_at", {
-        ascending: false
-      });
+  const {
+    data: sellerConversations,
+    error: sellerError
+  } = await supabase
+    .from("chat_conversations")
+    .select("*")
+    .eq("seller_id", user.id)
+    .order("updated_at", {
+      ascending: false
+    });
 
   if (sellerError) {
     throw sellerError;
@@ -307,23 +281,11 @@ async function getUserConversations(user) {
   });
 }
 
-/*
-=========================================================
-CUSTOMER CARE
-=========================================================
-*/
-
 async function customerCareConversation(user) {
-  /*
-   * Find an existing customer-care conversation.
-   *
-   * Customer care conversations use:
-   *   buyer_id = authenticated user
-   *   seller_id = null
-   *   business_id = null
-   */
-
-  const { data, error } = await supabase
+  const {
+    data,
+    error
+  } = await supabase
     .from("chat_conversations")
     .select("*")
     .eq("buyer_id", user.id)
@@ -360,11 +322,128 @@ async function customerCareConversation(user) {
   return created;
 }
 
-/*
-=========================================================
-MAIN HANDLER
-=========================================================
-*/
+async function customerCareAI(message) {
+  const text = clean(message);
+
+  if (!text) {
+    return "Please enter your question and I will be happy to help.";
+  }
+
+  const OPENAI_API_KEY =
+    Netlify.env.get("OPENAI_API_KEY");
+
+  /*
+   * If OpenAI is configured, use it.
+   */
+  if (OPENAI_API_KEY) {
+    try {
+      const response = await fetch(
+        "https://api.openai.com/v1/responses",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization":
+              `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model:
+              Netlify.env.get("OPENAI_MODEL") ||
+              "gpt-5-mini",
+            input: [
+              {
+                role: "system",
+                content:
+                  "You are SALGA Digital Mart customer care. Help buyers and sellers with marketplace questions, accounts, products, orders, payments, promotions, commissions and general support. Be concise, friendly and professional. Never invent payment confirmations or claim an order was completed unless the system confirms it."
+              },
+              {
+                role: "user",
+                content: text
+              }
+            ]
+          })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        const answer =
+          data.output_text ||
+          data.output?.flatMap(
+            item => item.content || []
+          )
+          .map(item => item.text || "")
+          .join(" ")
+          .trim();
+
+        if (answer) {
+          return answer;
+        }
+      }
+
+      console.warn(
+        "AI response failed; using fallback customer care."
+      );
+
+    } catch (error) {
+      console.warn(
+        "AI CUSTOMER CARE ERROR:",
+        error
+      );
+    }
+  }
+
+  /*
+   * Safe fallback when AI is not configured.
+   */
+  const lower = text.toLowerCase();
+
+  if (
+    lower.includes("payment") ||
+    lower.includes("paystack") ||
+    lower.includes("transfer")
+  ) {
+    return "For payment issues, please check that your payment was completed successfully. If money was deducted but your order was not confirmed, please contact SALGA Customer Care with your order details.";
+  }
+
+  if (
+    lower.includes("order") ||
+    lower.includes("delivery")
+  ) {
+    return "For an order or delivery issue, please provide your order details through Customer Care so the support team can check it.";
+  }
+
+  if (
+    lower.includes("seller") ||
+    lower.includes("business") ||
+    lower.includes("product")
+  ) {
+    return "Business owners can manage their business profile, upload products and communicate with customers through the marketplace.";
+  }
+
+  if (
+    lower.includes("promotion") ||
+    lower.includes("advert")
+  ) {
+    return "SALGA Digital Mart charges a 3% commission on promotion and advertising transactions.";
+  }
+
+  if (
+    lower.includes("commission")
+  ) {
+    return "The marketplace transaction commission is 5%. Promotion and advertising transactions carry a 3% commission.";
+  }
+
+  if (
+    lower.includes("chat") ||
+    lower.includes("message")
+  ) {
+    return "You can use the marketplace chat system to communicate with buyers, sellers and Customer Care after logging in.";
+  }
+
+  return "Thanks for contacting SALGA Digital Mart Customer Care. Please tell me what you need help with, and we will assist you.";
+}
 
 export default async function handler(request) {
   if (request.method === "OPTIONS") {
@@ -375,7 +454,8 @@ export default async function handler(request) {
   }
 
   try {
-    const user = await getUser(request);
+    const user =
+      await getUser(request);
 
     if (!user) {
       return json(
@@ -390,34 +470,18 @@ export default async function handler(request) {
     const url =
       new URL(request.url);
 
-    /*
-     * Support both:
-     *
-     * /api/chat?action=messages
-     *
-     * and:
-     *
-     * /api/chat?conversation_id=...
-     */
-
-    const action =
+    const queryAction =
       clean(
         url.searchParams.get("action")
       ).toLowerCase();
 
     /*
-     ========================================================
-     GET
-     ========================================================
-    */
-
+     * GET
+     */
     if (request.method === "GET") {
 
-      /*
-       * GET messages
-       */
       if (
-        action === "messages" ||
+        queryAction === "messages" ||
         url.searchParams.has(
           "conversation_id"
         )
@@ -451,12 +515,9 @@ export default async function handler(request) {
         });
       }
 
-      /*
-       * GET conversations
-       */
       if (
-        action === "conversations" ||
-        action === "list"
+        queryAction === "conversations" ||
+        queryAction === "list"
       ) {
         const conversations =
           await getUserConversations(
@@ -469,11 +530,8 @@ export default async function handler(request) {
         });
       }
 
-      /*
-       * GET customer care conversation
-       */
       if (
-        action === "customer_care"
+        queryAction === "customer_care"
       ) {
         const conversation =
           await customerCareConversation(
@@ -502,27 +560,75 @@ export default async function handler(request) {
     }
 
     /*
-     ========================================================
-     POST
-     ========================================================
-    */
-
+     * POST
+     */
     if (request.method === "POST") {
+
       const body =
         await request.json();
 
-      /*
-       * Accept different names used
-       * by the existing frontend.
-       */
       const requestedAction =
         clean(
           body.action ||
-          action
+          queryAction
         ).toLowerCase();
 
       /*
-       * Customer care message
+       * CUSTOMER CARE AI
+       *
+       * Supports:
+       * customer_care_ai
+       * customer-care-ai
+       * ai
+       */
+      if (
+        requestedAction ===
+          "customer_care_ai" ||
+        requestedAction ===
+          "customer-care-ai" ||
+        requestedAction === "ai"
+      ) {
+        const answer =
+          await customerCareAI(
+            body.message ||
+            body.text ||
+            body.question
+          );
+
+        return json({
+          ok: true,
+          answer,
+          message: answer,
+          reply: answer
+        });
+      }
+
+      /*
+       * CUSTOMER CARE CONVERSATION
+       */
+      if (
+        requestedAction ===
+          "customer_care"
+      ) {
+        const conversation =
+          await customerCareConversation(
+            user
+          );
+
+        const messages =
+          await getMessages(
+            conversation.id
+          );
+
+        return json({
+          ok: true,
+          conversation,
+          messages
+        });
+      }
+
+      /*
+       * SEND CUSTOMER CARE MESSAGE
        */
       if (
         requestedAction ===
@@ -556,16 +662,22 @@ export default async function handler(request) {
               body.text
           });
 
+        const messages =
+          await getMessages(
+            conversationId
+          );
+
         return json({
           ok: true,
           message,
+          messages,
           conversation_id:
             conversationId
         });
       }
 
       /*
-       * Create/find conversation
+       * CREATE/FIND CONVERSATION
        */
       if (
         requestedAction ===
@@ -573,20 +685,45 @@ export default async function handler(request) {
         requestedAction ===
           "conversation"
       ) {
+
+        const buyerId =
+          body.buyer_id ||
+          (
+            body.sender_role ===
+            "buyer"
+              ? user.id
+              : null
+          );
+
+        const sellerId =
+          body.seller_id;
+
+        if (!buyerId) {
+          return json(
+            {
+              ok: false,
+              error:
+                "buyer_id is required."
+            },
+            400
+          );
+        }
+
+        if (!sellerId) {
+          return json(
+            {
+              ok: false,
+              error:
+                "seller_id is required."
+            },
+            400
+          );
+        }
+
         const conversation =
           await getOrCreateConversation({
-            buyerId:
-              body.buyer_id ||
-              (
-                body.sender_role ===
-                "buyer"
-                  ? user.id
-                  : null
-              ),
-
-            sellerId:
-              body.seller_id,
-
+            buyerId,
+            sellerId,
             businessId:
               body.business_id
           });
@@ -598,41 +735,100 @@ export default async function handler(request) {
       }
 
       /*
-       * Normal send message
+       * GET MESSAGES THROUGH POST
+       *
+       * Some versions of the frontend
+       * use:
+       *
+       * action: "messages"
        */
       if (
         requestedAction ===
-          "send" ||
+          "messages" ||
         requestedAction ===
-          "message" ||
-        requestedAction === ""
+          "get_messages"
       ) {
-        let conversationId =
+
+        const conversationId =
           clean(
             body.conversation_id
           );
 
+        if (!conversationId) {
+          return json(
+            {
+              ok: false,
+              error:
+                "conversation_id is required."
+            },
+            400
+          );
+        }
+
+        const messages =
+          await getMessages(
+            conversationId
+          );
+
+        return json({
+          ok: true,
+          messages
+        });
+      }
+
+      /*
+       * NORMAL SEND MESSAGE
+       *
+       * Supports:
+       * send
+       * message
+       * send_message
+       * sendMessage
+       * empty action
+       */
+      if (
+        requestedAction === "send" ||
+        requestedAction === "message" ||
+        requestedAction ===
+          "send_message" ||
+        requestedAction ===
+          "sendmessage" ||
+        requestedAction === ""
+      ) {
+
+        let conversationId =
+          clean(
+            body.conversation_id ||
+            body.conversationId
+          );
+
         /*
-         * If frontend did not supply a
-         * conversation ID, create one
-         * when buyer + seller are supplied.
+         * Automatically create a
+         * buyer/seller conversation
+         * when possible.
          */
         if (!conversationId) {
-          if (
+
+          const sellerId =
             body.seller_id ||
-            body.business_id
-          ) {
+            body.sellerId;
+
+          const businessId =
+            body.business_id ||
+            body.businessId;
+
+          if (sellerId) {
+
             const conversation =
               await getOrCreateConversation({
                 buyerId:
                   body.buyer_id ||
+                  body.buyerId ||
                   user.id,
 
-                sellerId:
-                  body.seller_id,
+                sellerId,
 
-                businessId:
-                  body.business_id
+                businessId
               });
 
             conversationId =
@@ -652,8 +848,9 @@ export default async function handler(request) {
         }
 
         /*
-         * Never allow a client to
-         * impersonate another sender.
+         * Never trust the client
+         * to provide another user's
+         * sender ID.
          */
         const senderRole =
           clean(
@@ -661,17 +858,22 @@ export default async function handler(request) {
             body.senderRole
           ).toLowerCase();
 
-        let safeRole = "buyer";
+        let safeRole =
+          "buyer";
 
         if (
           senderRole === "seller"
         ) {
           safeRole = "seller";
-        } else if (
+        }
+
+        if (
           senderRole === "admin"
         ) {
           safeRole = "admin";
-        } else if (
+        }
+
+        if (
           senderRole === "customer"
         ) {
           safeRole = "customer";
@@ -687,9 +889,15 @@ export default async function handler(request) {
               body.text
           });
 
+        const messages =
+          await getMessages(
+            conversationId
+          );
+
         return json({
           ok: true,
           message,
+          messages,
           conversation_id:
             conversationId
         });
@@ -715,6 +923,7 @@ export default async function handler(request) {
     );
 
   } catch (error) {
+
     console.error(
       "CHAT ERROR:",
       error

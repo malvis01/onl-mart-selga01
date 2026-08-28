@@ -4,16 +4,18 @@ import { createClient } from "@supabase/supabase-js";
  * SALGA Digital Mart - Products API
  *
  * Supports:
- * 1. JSON product creation with image_url
- * 2. multipart/form-data product creation with an actual image file
- *
- * Uploaded images are stored in:
- * product-images
+ * - JSON product creation
+ * - multipart/form-data product creation
+ * - product image upload to Supabase Storage
+ * - automatic business-profile creation for existing sellers
  */
 
 const env = (name) => {
   try {
-    if (typeof Netlify !== "undefined" && Netlify.env?.get) {
+    if (
+      typeof Netlify !== "undefined" &&
+      Netlify.env?.get
+    ) {
       return Netlify.env.get(name);
     }
   } catch (_) {}
@@ -63,6 +65,9 @@ function json(data, status = 200) {
   );
 }
 
+/*
+ * Create the server-side Supabase client.
+ */
 function getSupabase() {
   if (!SUPABASE_URL) {
     throw new Error(
@@ -88,6 +93,9 @@ function getSupabase() {
   );
 }
 
+/*
+ * Get the authenticated Supabase user.
+ */
 async function getUser(req, supabase) {
   const authorization =
     req.headers.get("authorization");
@@ -97,7 +105,9 @@ async function getUser(req, supabase) {
   }
 
   const token =
-    authorization.substring(7).trim();
+    authorization
+      .substring(7)
+      .trim();
 
   if (!token) {
     return null;
@@ -120,7 +130,13 @@ async function getUser(req, supabase) {
   return data.user;
 }
 
-function cleanText(value, fallback = "") {
+/*
+ * Safely convert values to text.
+ */
+function cleanText(
+  value,
+  fallback = ""
+) {
   if (
     value === undefined ||
     value === null
@@ -131,6 +147,9 @@ function cleanText(value, fallback = "") {
   return String(value).trim();
 }
 
+/*
+ * Safely convert values to numbers.
+ */
 function parseNumber(
   value,
   fallback = null
@@ -150,6 +169,9 @@ function parseNumber(
     : fallback;
 }
 
+/*
+ * Determine image extension.
+ */
 function extensionForType(
   type,
   originalName = ""
@@ -173,6 +195,9 @@ function extensionForType(
   return match?.[1] || "jpg";
 }
 
+/*
+ * Check whether request is multipart.
+ */
 function isMultipart(req) {
   const contentType =
     req.headers.get("content-type") || "";
@@ -182,6 +207,9 @@ function isMultipart(req) {
     .includes("multipart/form-data");
 }
 
+/*
+ * Read JSON or multipart product data.
+ */
 async function readProductBody(req) {
   if (isMultipart(req)) {
     const form =
@@ -190,9 +218,8 @@ async function readProductBody(req) {
     let imageFile = null;
 
     /*
-     * Accept several possible image field names.
+     * Accept several image field names.
      */
-
     for (const key of [
       "image",
       "image_file",
@@ -201,7 +228,8 @@ async function readProductBody(req) {
       "file",
       "photo"
     ]) {
-      const value = form.get(key);
+      const value =
+        form.get(key);
 
       if (
         value &&
@@ -214,7 +242,8 @@ async function readProductBody(req) {
     }
 
     return {
-      name: form.get("name"),
+      name:
+        form.get("name"),
 
       description:
         form.get("description"),
@@ -238,22 +267,24 @@ async function readProductBody(req) {
     };
   }
 
-  let body;
-
   try {
-    body = await req.json();
+    const body =
+      await req.json();
+
+    return {
+      ...(body || {}),
+      imageFile: null
+    };
   } catch (_) {
     throw new Error(
       "Invalid product data. Send JSON or multipart/form-data."
     );
   }
-
-  return {
-    ...(body || {}),
-    imageFile: null
-  };
 }
 
+/*
+ * Upload product image to Supabase Storage.
+ */
 async function uploadProductImage(
   supabase,
   imageFile,
@@ -333,17 +364,18 @@ async function uploadProductImage(
 
   const {
     error: uploadError
-  } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(
-      storagePath,
-      fileBuffer,
-      {
-        contentType,
-        cacheControl: "31536000",
-        upsert: false
-      }
-    );
+  } =
+    await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(
+        storagePath,
+        fileBuffer,
+        {
+          contentType,
+          cacheControl: "31536000",
+          upsert: false
+        }
+      );
 
   if (uploadError) {
     console.error(
@@ -358,21 +390,24 @@ async function uploadProductImage(
 
   const {
     data: publicUrlData
-  } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(
-      storagePath
-    );
+  } =
+    supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(
+        storagePath
+      );
 
   const imageUrl =
     publicUrlData?.publicUrl;
 
   if (!imageUrl) {
-    await supabase.storage
-      .from(STORAGE_BUCKET)
-      .remove([
-        storagePath
-      ]);
+    try {
+      await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([
+          storagePath
+        ]);
+    } catch (_) {}
 
     throw new Error(
       "Could not create the product image URL."
@@ -385,17 +420,122 @@ async function uploadProductImage(
   };
 }
 
-export default async (req) => {
+/*
+ * Find or automatically create the seller's
+ * business profile.
+ *
+ * This fixes the problem where an existing seller
+ * account has a profiles row but no businesses row.
+ */
+async function getOrCreateBusiness(
+  supabase,
+  user,
+  profile
+) {
+  /*
+   * First try to find the existing business.
+   */
+  const {
+    data: existingBusiness,
+    error: businessCheckError
+  } =
+    await supabase
+      .from("businesses")
+      .select(
+        "id, business_name, status"
+      )
+      .eq(
+        "owner_id",
+        user.id
+      )
+      .limit(1)
+      .maybeSingle();
 
+  if (businessCheckError) {
+    console.error(
+      "BUSINESS LOOKUP ERROR:",
+      businessCheckError
+    );
+
+    throw new Error(
+      businessCheckError.message
+    );
+  }
+
+  /*
+   * Business already exists.
+   */
+  if (existingBusiness) {
+    return existingBusiness;
+  }
+
+  /*
+   * Business does not exist.
+   *
+   * Automatically create it using the seller's
+   * existing profile information.
+   */
+  const businessName =
+    cleanText(
+      profile.full_name
+    ) ||
+    cleanText(
+      user.user_metadata?.businessName
+    ) ||
+    cleanText(
+      user.user_metadata?.full_name
+    ) ||
+    "My Business";
+
+  const {
+    data: createdBusiness,
+    error: createBusinessError
+  } =
+    await supabase
+      .from("businesses")
+      .insert({
+        owner_id:
+          user.id,
+
+        business_name:
+          businessName,
+
+        status:
+          "active"
+      })
+      .select(
+        "id, business_name, status"
+      )
+      .single();
+
+  if (createBusinessError) {
+    console.error(
+      "AUTOMATIC BUSINESS CREATE ERROR:",
+      createBusinessError
+    );
+
+    throw new Error(
+      `Could not create your business profile: ${createBusinessError.message}`
+    );
+  }
+
+  return createdBusiness;
+}
+
+export default async (req) => {
+  /*
+   * CORS preflight.
+   */
   if (req.method === "OPTIONS") {
     return new Response(
       "ok",
-      { headers }
+      {
+        headers
+      }
     );
   }
 
   try {
-
     const supabase =
       getSupabase();
 
@@ -404,50 +544,48 @@ export default async (req) => {
      * GET PRODUCTS
      * =====================================================
      */
-
     if (req.method === "GET") {
-
       const {
         data,
         error
-      } = await supabase
-        .from("products")
-        .select(`
-          id,
-          business_id,
-          name,
-          description,
-          price,
-          image_url,
-          category,
-          stock,
-          status,
-          approved,
-          created_at,
-          businesses (
+      } =
+        await supabase
+          .from("products")
+          .select(`
             id,
-            business_name,
-            logo_url,
-            verified
+            business_id,
+            name,
+            description,
+            price,
+            image_url,
+            category,
+            stock,
+            status,
+            approved,
+            created_at,
+            businesses (
+              id,
+              business_name,
+              logo_url,
+              verified
+            )
+          `)
+          .neq(
+            "status",
+            "deleted"
           )
-        `)
-        .neq(
-          "status",
-          "deleted"
-        )
-        .eq(
-          "approved",
-          true
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
+          .eq(
+            "approved",
+            true
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
 
       if (error) {
-
         console.error(
           "GET PRODUCTS ERROR:",
           error
@@ -456,7 +594,8 @@ export default async (req) => {
         return json(
           {
             success: false,
-            error: error.message
+            error:
+              error.message
           },
           500
         );
@@ -464,7 +603,8 @@ export default async (req) => {
 
       return json({
         success: true,
-        products: data || []
+        products:
+          data || []
       });
     }
 
@@ -473,13 +613,12 @@ export default async (req) => {
      * CREATE PRODUCT
      * =====================================================
      */
-
     if (req.method === "POST") {
-
       /*
-       * Authenticate seller.
+       * ---------------------------------------------------
+       * 1. Authenticate
+       * ---------------------------------------------------
        */
-
       const user =
         await getUser(
           req,
@@ -487,7 +626,6 @@ export default async (req) => {
         );
 
       if (!user) {
-
         return json(
           {
             success: false,
@@ -499,28 +637,26 @@ export default async (req) => {
       }
 
       /*
-       * Get user profile.
+       * ---------------------------------------------------
+       * 2. Load seller profile
+       * ---------------------------------------------------
        */
-
       const {
         data: profile,
         error: profileError
-      } = await supabase
-        .from("profiles")
-        .select(
-          "id, role, phone, full_name"
-        )
-        .eq(
-          "id",
-          user.id
-        )
-        .single();
+      } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, role, phone, full_name"
+          )
+          .eq(
+            "id",
+            user.id
+          )
+          .maybeSingle();
 
-      if (
-        profileError ||
-        !profile
-      ) {
-
+      if (profileError) {
         console.error(
           "PROFILE LOOKUP ERROR:",
           profileError
@@ -530,21 +666,35 @@ export default async (req) => {
           {
             success: false,
             error:
-              "User profile not found."
+              profileError.message
+          },
+          500
+        );
+      }
+
+      /*
+       * If the profile is missing, do not allow upload.
+       */
+      if (!profile) {
+        return json(
+          {
+            success: false,
+            error:
+              "User profile not found. Please log out and log in again."
           },
           404
         );
       }
 
       /*
-       * Only sellers may upload.
+       * ---------------------------------------------------
+       * 3. Verify seller account
+       * ---------------------------------------------------
        */
-
       if (
         profile.role !==
         "seller"
       ) {
-
         return json(
           {
             success: false,
@@ -556,20 +706,18 @@ export default async (req) => {
       }
 
       /*
-       * Read JSON or multipart/form-data.
+       * ---------------------------------------------------
+       * 4. Read product data
+       * ---------------------------------------------------
        */
-
       let body;
 
       try {
-
         body =
           await readProductBody(
             req
           );
-
       } catch (error) {
-
         return json(
           {
             success: false,
@@ -583,16 +731,16 @@ export default async (req) => {
       }
 
       /*
-       * Validate product name.
+       * ---------------------------------------------------
+       * 5. Product name
+       * ---------------------------------------------------
        */
-
       const name =
         cleanText(
           body.name
         );
 
       if (!name) {
-
         return json(
           {
             success: false,
@@ -604,9 +752,10 @@ export default async (req) => {
       }
 
       /*
-       * Validate price.
+       * ---------------------------------------------------
+       * 6. Product price
+       * ---------------------------------------------------
        */
-
       if (
         body.price ===
           undefined ||
@@ -614,7 +763,6 @@ export default async (req) => {
           null ||
         body.price === ""
       ) {
-
         return json(
           {
             success: false,
@@ -636,7 +784,6 @@ export default async (req) => {
         ) ||
         price <= 0
       ) {
-
         return json(
           {
             success: false,
@@ -648,9 +795,10 @@ export default async (req) => {
       }
 
       /*
-       * Validate stock.
+       * ---------------------------------------------------
+       * 7. Stock
+       * ---------------------------------------------------
        */
-
       const stock =
         body.stock ===
           undefined ||
@@ -668,7 +816,6 @@ export default async (req) => {
         ) ||
         stock < 0
       ) {
-
         return json(
           {
             success: false,
@@ -680,75 +827,68 @@ export default async (req) => {
       }
 
       /*
-       * Find seller's business.
+       * ---------------------------------------------------
+       * 8. Find OR create business
+       * ---------------------------------------------------
+       *
+       * THIS IS THE IMPORTANT FIX.
+       *
+       * Existing sellers without a businesses row
+       * will automatically receive one.
        */
+      let business;
 
-      const {
-        data: business,
-        error: businessError
-      } = await supabase
-        .from("businesses")
-        .select(
-          "id, business_name, status"
-        )
-        .eq(
-          "owner_id",
-          user.id
-        )
-        .maybeSingle();
-
-      if (businessError) {
-
+      try {
+        business =
+          await getOrCreateBusiness(
+            supabase,
+            user,
+            profile
+          );
+      } catch (error) {
         console.error(
-          "BUSINESS LOOKUP ERROR:",
-          businessError
+          "BUSINESS SETUP ERROR:",
+          error
         );
 
         return json(
           {
             success: false,
             error:
-              businessError.message
-          },
-          500
-        );
-      }
-
-      if (!business) {
-
-        return json(
-          {
-            success: false,
-            error:
-              "Create your business profile before adding products."
+              error instanceof Error
+                ? error.message
+                : "Could not create your business profile."
           },
           400
         );
       }
 
       /*
-       * Business must be active.
+       * ---------------------------------------------------
+       * 9. Make sure business is active
+       * ---------------------------------------------------
+       *
+       * Existing active businesses continue normally.
        */
-
       if (
         business.status !==
         "active"
       ) {
-
         return json(
           {
             success: false,
             error:
-              "Your business is not active. Please complete your business profile."
+              "Your business is not active. Please contact customer support."
           },
           403
         );
       }
 
       /*
-       * Image URL for an existing external image.
+       * ---------------------------------------------------
+       * 10. Image
+       * ---------------------------------------------------
        */
-
       let imageUrl =
         cleanText(
           body.image_url ||
@@ -760,35 +900,45 @@ export default async (req) => {
         null;
 
       /*
-       * If an actual image file was submitted,
-       * upload it to Supabase Storage.
+       * Upload actual image if supplied.
        */
-
       if (body.imageFile) {
+        try {
+          const uploaded =
+            await uploadProductImage(
+              supabase,
+              body.imageFile,
+              user.id
+            );
 
-        const uploaded =
-          await uploadProductImage(
-            supabase,
-            body.imageFile,
-            user.id
+          imageUrl =
+            uploaded.imageUrl;
+
+          storagePath =
+            uploaded.storagePath;
+        } catch (error) {
+          return json(
+            {
+              success: false,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Product image upload failed."
+            },
+            400
           );
-
-        imageUrl =
-          uploaded.imageUrl;
-
-        storagePath =
-          uploaded.storagePath;
+        }
       }
 
       /*
-       * Create product.
+       * ---------------------------------------------------
+       * 11. Create product
+       * ---------------------------------------------------
        *
-       * Products are approved immediately
-       * and become visible on the marketplace.
+       * Product is approved immediately so it can
+       * appear on the marketplace.
        */
-
       const product = {
-
         business_id:
           business.id,
 
@@ -810,7 +960,8 @@ export default async (req) => {
             "Other"
           ) || "Other",
 
-        stock,
+        stock:
+          Math.floor(stock),
 
         status:
           "active",
@@ -822,43 +973,44 @@ export default async (req) => {
       const {
         data: created,
         error: createError
-      } = await supabase
-        .from("products")
-        .insert(
-          product
-        )
-        .select(`
-          id,
-          business_id,
-          name,
-          description,
-          price,
-          image_url,
-          category,
-          stock,
-          status,
-          approved,
-          created_at
-        `)
-        .single();
+      } =
+        await supabase
+          .from("products")
+          .insert(
+            product
+          )
+          .select(`
+            id,
+            business_id,
+            name,
+            description,
+            price,
+            image_url,
+            category,
+            stock,
+            status,
+            approved,
+            created_at
+          `)
+          .single();
 
+      /*
+       * ---------------------------------------------------
+       * 12. Product creation error
+       * ---------------------------------------------------
+       */
       if (createError) {
-
         console.error(
           "CREATE PRODUCT ERROR:",
           createError
         );
 
         /*
-         * If the database insert failed,
-         * remove the uploaded image so
-         * we don't leave orphaned files.
+         * Remove uploaded image if product creation
+         * failed so we don't leave an orphaned file.
          */
-
         if (storagePath) {
-
           try {
-
             await supabase.storage
               .from(
                 STORAGE_BUCKET
@@ -866,11 +1018,9 @@ export default async (req) => {
               .remove([
                 storagePath
               ]);
-
           } catch (
             cleanupError
           ) {
-
             console.error(
               "IMAGE CLEANUP ERROR:",
               cleanupError
@@ -888,11 +1038,17 @@ export default async (req) => {
         );
       }
 
+      /*
+       * ---------------------------------------------------
+       * 13. Success
+       * ---------------------------------------------------
+       */
       return json(
         {
           success: true,
 
-          product: created,
+          product:
+            created,
 
           message:
             "Product uploaded successfully and is now live."
@@ -906,7 +1062,6 @@ export default async (req) => {
      * UNSUPPORTED METHOD
      * =====================================================
      */
-
     return json(
       {
         success: false,
@@ -917,9 +1072,8 @@ export default async (req) => {
     );
 
   } catch (error) {
-
     console.error(
-      "PRODUCT ERROR:",
+      "PRODUCT API ERROR:",
       error
     );
 

@@ -7,59 +7,56 @@ const SUPABASE_URL =
 const SUPABASE_SERVICE_ROLE_KEY =
   Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Supabase server environment variables are missing.");
-}
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization",
-  "Access-Control-Allow-Methods":
-    "GET, POST, OPTIONS"
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };
 
-function json(data, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...headers,
-        "Content-Type": "application/json"
-      }
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...headers,
+      "Content-Type": "application/json"
     }
+  });
+
+const clean = value => String(value ?? "").trim();
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error(
+    "chat.mjs: Supabase server environment variables are missing"
   );
 }
 
-function clean(value) {
-  return String(value ?? "").trim();
-}
+const supabase =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+    : null;
 
 async function getUser(request) {
-  const authorization =
-    request.headers.get("authorization");
+  if (!supabase) return null;
 
-  if (
-    !authorization ||
-    !authorization.toLowerCase().startsWith("bearer ")
-  ) {
+  const authorization =
+    request.headers.get("authorization") || "";
+
+  if (!/^bearer\s+/i.test(authorization)) {
     return null;
   }
 
-  const token =
-    authorization.substring(7).trim();
+  const token = authorization
+    .replace(/^bearer\s+/i, "")
+    .trim();
 
   if (!token) return null;
 
@@ -69,7 +66,11 @@ async function getUser(request) {
   } = await supabase.auth.getUser(token);
 
   if (error || !data?.user) {
-    console.error("CHAT AUTH ERROR:", error);
+    console.error(
+      "CHAT AUTH ERROR",
+      error?.message || error
+    );
+
     return null;
   }
 
@@ -77,13 +78,22 @@ async function getUser(request) {
 }
 
 async function getMessages(conversationId) {
+  if (!conversationId) {
+    throw new Error(
+      "conversation_id is required."
+    );
+  }
+
   const {
     data,
     error
   } = await supabase
     .from("messages")
     .select("*")
-    .eq("conversation_id", conversationId)
+    .eq(
+      "conversation_id",
+      conversationId
+    )
     .order("created_at", {
       ascending: true
     });
@@ -93,56 +103,30 @@ async function getMessages(conversationId) {
   return data || [];
 }
 
-async function sendMessage({
-  conversationId,
-  senderId,
-  senderRole,
-  message
-}) {
-  const text = clean(message);
-
-  if (!conversationId) {
-    throw new Error("conversation_id is required.");
-  }
-
-  if (!senderId) {
-    throw new Error("sender_id is required.");
-  }
-
-  if (!text) {
-    throw new Error("Message cannot be empty.");
-  }
+async function getConversation(
+  id,
+  userId
+) {
+  if (!id) return null;
 
   const {
     data,
     error
   } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id: conversationId,
-      sender_id: senderId,
-      sender_role: senderRole || "buyer",
-      message: text
-    })
+    .from("chat_conversations")
     .select("*")
-    .single();
+    .eq("id", id)
+    .maybeSingle();
 
   if (error) throw error;
 
-  const {
-    error: updateError
-  } = await supabase
-    .from("chat_conversations")
-    .update({
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", conversationId);
+  if (!data) return null;
 
-  if (updateError) {
-    console.warn(
-      "Conversation timestamp update skipped:",
-      updateError.message
-    );
+  if (
+    data.buyer_id !== userId &&
+    data.seller_id !== userId
+  ) {
+    return null;
   }
 
   return data;
@@ -153,19 +137,21 @@ async function getOrCreateConversation({
   sellerId,
   businessId
 }) {
-  if (!buyerId) {
-    throw new Error("buyer_id is required.");
-  }
-
-  if (!sellerId) {
-    throw new Error("seller_id is required.");
+  if (!buyerId || !sellerId) {
+    throw new Error(
+      "buyer_id and seller_id are required."
+    );
   }
 
   let query = supabase
     .from("chat_conversations")
     .select("*")
     .eq("buyer_id", buyerId)
-    .eq("seller_id", sellerId);
+    .eq("seller_id", sellerId)
+    .order("updated_at", {
+      ascending: false
+    })
+    .limit(1);
 
   if (businessId) {
     query = query.eq(
@@ -176,119 +162,50 @@ async function getOrCreateConversation({
 
   const {
     data: existing,
-    error: existingError
-  } = await query
-    .order("updated_at", {
-      ascending: false
-    })
-    .limit(1);
+    error
+  } = await query;
 
-  if (existingError) {
-    throw existingError;
-  }
+  if (error) throw error;
 
   if (existing?.length) {
     return existing[0];
   }
 
-  const insertData = {
+  const row = {
     buyer_id: buyerId,
     seller_id: sellerId
   };
 
   if (businessId) {
-    insertData.business_id =
-      businessId;
+    row.business_id = businessId;
   }
 
   const {
     data,
-    error
+    error: insertError
   } = await supabase
     .from("chat_conversations")
-    .insert(insertData)
+    .insert(row)
     .select("*")
     .single();
 
-  if (error) throw error;
+  if (insertError) {
+    throw insertError;
+  }
 
   return data;
 }
 
-async function getUserConversations(user) {
-  const {
-    data: buyerConversations,
-    error: buyerError
-  } = await supabase
-    .from("chat_conversations")
-    .select("*")
-    .eq("buyer_id", user.id)
-    .order("updated_at", {
-      ascending: false
-    });
-
-  if (buyerError) {
-    throw buyerError;
-  }
-
-  const {
-    data: sellerConversations,
-    error: sellerError
-  } = await supabase
-    .from("chat_conversations")
-    .select("*")
-    .eq("seller_id", user.id)
-    .order("updated_at", {
-      ascending: false
-    });
-
-  if (sellerError) {
-    throw sellerError;
-  }
-
-  const combined = [
-    ...(buyerConversations || []),
-    ...(sellerConversations || [])
-  ];
-
-  const unique = new Map();
-
-  for (const conversation of combined) {
-    unique.set(
-      conversation.id,
-      conversation
-    );
-  }
-
-  return Array.from(
-    unique.values()
-  ).sort((a, b) => {
-    const aTime =
-      new Date(
-        a.updated_at ||
-        a.created_at ||
-        0
-      ).getTime();
-
-    const bTime =
-      new Date(
-        b.updated_at ||
-        b.created_at ||
-        0
-      ).getTime();
-
-    return bTime - aTime;
-  });
-}
-
-async function customerCareConversation(user) {
+async function customerCareConversation(
+  userId
+) {
   const {
     data,
     error
   } = await supabase
     .from("chat_conversations")
     .select("*")
-    .eq("buyer_id", user.id)
+    .eq("buyer_id", userId)
     .is("seller_id", null)
     .is("business_id", null)
     .order("updated_at", {
@@ -308,7 +225,7 @@ async function customerCareConversation(user) {
   } = await supabase
     .from("chat_conversations")
     .insert({
-      buyer_id: user.id,
+      buyer_id: userId,
       seller_id: null,
       business_id: null
     })
@@ -322,96 +239,245 @@ async function customerCareConversation(user) {
   return created;
 }
 
-async function customerCareAI(message) {
+async function listConversations(
+  userId
+) {
+  const [
+    buyerResult,
+    sellerResult
+  ] = await Promise.all([
+    supabase
+      .from("chat_conversations")
+      .select("*")
+      .eq("buyer_id", userId),
+
+    supabase
+      .from("chat_conversations")
+      .select("*")
+      .eq("seller_id", userId)
+  ]);
+
+  if (buyerResult.error) {
+    throw buyerResult.error;
+  }
+
+  if (sellerResult.error) {
+    throw sellerResult.error;
+  }
+
+  const map = new Map();
+
+  for (
+    const row of [
+      ...(buyerResult.data || []),
+      ...(sellerResult.data || [])
+    ]
+  ) {
+    map.set(row.id, row);
+  }
+
+  return [...map.values()].sort(
+    (a, b) =>
+      new Date(
+        b.updated_at ||
+        b.created_at ||
+        0
+      ) -
+      new Date(
+        a.updated_at ||
+        a.created_at ||
+        0
+      )
+  );
+}
+
+async function sendMessage({
+  conversationId,
+  user,
+  message,
+  senderRole
+}) {
+  const text = clean(message);
+
+  if (!text) {
+    throw new Error(
+      "Message cannot be empty."
+    );
+  }
+
+  const conversation =
+    await getConversation(
+      conversationId,
+      user.id
+    );
+
+  if (!conversation) {
+    throw new Error(
+      "Conversation not found or access denied."
+    );
+  }
+
+  const role =
+    clean(senderRole) ||
+    (
+      conversation.buyer_id === user.id
+        ? "buyer"
+        : "seller"
+    );
+
+  const {
+    data,
+    error
+  } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id:
+        conversation.id,
+
+      sender_id:
+        user.id,
+
+      sender_role:
+        role,
+
+      message:
+        text
+    })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+
+  await supabase
+    .from("chat_conversations")
+    .update({
+      updated_at:
+        new Date().toISOString()
+    })
+    .eq(
+      "id",
+      conversation.id
+    );
+
+  return {
+    message: data,
+    conversation_id:
+      conversation.id
+  };
+}
+
+async function aiReply(message) {
   const text = clean(message);
 
   if (!text) {
     return "Please enter your question and I will be happy to help.";
   }
 
-  const OPENAI_API_KEY =
-    Netlify.env.get("OPENAI_API_KEY");
+  const key =
+    Netlify.env.get(
+      "OPENAI_API_KEY"
+    );
 
-  /*
-   * If OpenAI is configured, use it.
-   */
-  if (OPENAI_API_KEY) {
+  if (key) {
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization":
-              `Bearer ${OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model:
-              Netlify.env.get("OPENAI_MODEL") ||
-              "gpt-5-mini",
-            input: [
-              {
-                role: "system",
-                content:
-                  "You are SALGA Digital Mart customer care. Help buyers and sellers with marketplace questions, accounts, products, orders, payments, promotions, commissions and general support. Be concise, friendly and professional. Never invent payment confirmations or claim an order was completed unless the system confirms it."
-              },
-              {
-                role: "user",
-                content: text
-              }
-            ]
-          })
-        }
-      );
+      const response =
+        await fetch(
+          "https://api.openai.com/v1/responses",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${key}`
+            },
+
+            body: JSON.stringify({
+              model:
+                Netlify.env.get(
+                  "OPENAI_MODEL"
+                ) ||
+                "gpt-5-mini",
+
+              input: [
+                {
+                  role: "system",
+
+                  content:
+                    "You are SALGA Digital Mart Customer Care. Help buyers and sellers with accounts, products, orders, payments, delivery, promotions, commissions and chat. Be concise, friendly and practical. Never claim a payment, refund, payout, order or account change was completed unless the system confirms it. Marketplace transaction commission is 5%; promotion/advertising commission is 3%."
+                },
+
+                {
+                  role: "user",
+
+                  content:
+                    text.slice(
+                      0,
+                      4000
+                    )
+                }
+              ]
+            })
+          }
+        );
 
       if (response.ok) {
-        const data = await response.json();
+        const data =
+          await response.json();
 
         const answer =
-          data.output_text ||
-          data.output?.flatMap(
-            item => item.content || []
-          )
-          .map(item => item.text || "")
-          .join(" ")
-          .trim();
+          clean(
+            data.output_text ||
+            (data.output || [])
+              .flatMap(
+                item =>
+                  item.content || []
+              )
+              .map(
+                item =>
+                  item.text || ""
+              )
+              .join(" ")
+          );
 
         if (answer) {
           return answer;
         }
       }
-
-      console.warn(
-        "AI response failed; using fallback customer care."
-      );
-
     } catch (error) {
       console.warn(
-        "AI CUSTOMER CARE ERROR:",
+        "AI CUSTOMER CARE ERROR",
         error
       );
     }
   }
 
-  /*
-   * Safe fallback when AI is not configured.
-   */
-  const lower = text.toLowerCase();
+  const lower =
+    text.toLowerCase();
+
+  if (
+    lower.includes(
+      "commission"
+    )
+  ) {
+    return "SALGA Digital Mart charges 5% on marketplace transactions and 3% on promotion and advertising transactions.";
+  }
 
   if (
     lower.includes("payment") ||
     lower.includes("paystack") ||
     lower.includes("transfer")
   ) {
-    return "For payment issues, please check that your payment was completed successfully. If money was deducted but your order was not confirmed, please contact SALGA Customer Care with your order details.";
+    return "If you have a payment problem, please keep your transaction reference. If money was deducted but the order was not confirmed, contact Customer Care with the order details.";
   }
 
   if (
     lower.includes("order") ||
     lower.includes("delivery")
   ) {
-    return "For an order or delivery issue, please provide your order details through Customer Care so the support team can check it.";
+    return "Please provide your order details in Customer Care so the support team can check the order and delivery status.";
   }
 
   if (
@@ -419,513 +485,651 @@ async function customerCareAI(message) {
     lower.includes("business") ||
     lower.includes("product")
   ) {
-    return "Business owners can manage their business profile, upload products and communicate with customers through the marketplace.";
-  }
-
-  if (
-    lower.includes("promotion") ||
-    lower.includes("advert")
-  ) {
-    return "SALGA Digital Mart charges a 3% commission on promotion and advertising transactions.";
-  }
-
-  if (
-    lower.includes("commission")
-  ) {
-    return "The marketplace transaction commission is 5%. Promotion and advertising transactions carry a 3% commission.";
-  }
-
-  if (
-    lower.includes("chat") ||
-    lower.includes("message")
-  ) {
-    return "You can use the marketplace chat system to communicate with buyers, sellers and Customer Care after logging in.";
+    return "Business owners can manage their profile, upload products and communicate with customers through SALGA Digital Mart.";
   }
 
   return "Thanks for contacting SALGA Digital Mart Customer Care. Please tell me what you need help with, and we will assist you.";
 }
 
-export default async function handler(request) {
-  if (request.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers
-    });
+function normalizeAction(
+  body,
+  url
+) {
+  const raw =
+    clean(
+      body?.action ||
+      body?.type ||
+      url.searchParams.get(
+        "action"
+      )
+    ).toLowerCase();
+
+  const aliases = {
+
+    get_messages:
+      "messages",
+
+    getmessages:
+      "messages",
+
+    fetch_messages:
+      "messages",
+
+    load_messages:
+      "messages",
+
+    send_message:
+      "send",
+
+    sendmessage:
+      "send",
+
+    create_message:
+      "send",
+
+    start_conversation:
+      "create_conversation",
+
+    create_chat:
+      "create_conversation",
+
+    createchat:
+      "create_conversation",
+
+    get_conversations:
+      "conversations",
+
+    getconversations:
+      "conversations",
+
+    list_conversations:
+      "conversations",
+
+    customer_care_chat:
+      "customer_care",
+
+    contact_customer_care:
+      "customer_care",
+
+    contact_platform_customer_care:
+      "customer_care",
+
+    customer_care_message:
+      "customer_care_send",
+
+    send_customer_care:
+      "customer_care_send",
+
+    send_customer_care_message:
+      "customer_care_send",
+
+    customer_care_ai:
+      "ai",
+
+    customer_care_ai_message:
+      "ai",
+
+    "customer-care-ai":
+      "ai"
+  };
+
+  return (
+    aliases[raw] ||
+    raw
+  );
+}
+
+export default async function handler(
+  request
+) {
+  if (
+    request.method ===
+    "OPTIONS"
+  ) {
+    return new Response(
+      "ok",
+      {
+        status: 200,
+        headers
+      }
+    );
+  }
+
+  if (!supabase) {
+    return json(
+      {
+        ok: false,
+        error:
+          "Supabase server environment variables are missing."
+      },
+      500
+    );
   }
 
   try {
+    const url =
+      new URL(request.url);
+
+    let body = {};
+
+    if (
+      request.method ===
+      "POST"
+    ) {
+      try {
+        body =
+          await request.json();
+      } catch {
+        body = {};
+      }
+    }
+
+    const action =
+      normalizeAction(
+        body,
+        url
+      );
+
     const user =
-      await getUser(request);
+      await getUser(
+        request
+      );
 
     if (!user) {
       return json(
         {
           ok: false,
-          error: "Login required."
+          error:
+            "Login required."
         },
         401
       );
     }
 
-    const url =
-      new URL(request.url);
-
-    const queryAction =
-      clean(
-        url.searchParams.get("action")
-      ).toLowerCase();
-
     /*
      * GET
      */
-    if (request.method === "GET") {
+
+    if (
+      request.method ===
+      "GET"
+    ) {
 
       if (
-        queryAction === "messages" ||
+        action ===
+          "messages" ||
         url.searchParams.has(
           "conversation_id"
         )
       ) {
-        const conversationId =
-          clean(
+
+        const conversation =
+          await getConversation(
             url.searchParams.get(
               "conversation_id"
-            )
+            ),
+            user.id
           );
 
-        if (!conversationId) {
+        if (!conversation) {
           return json(
             {
               ok: false,
               error:
-                "conversation_id is required."
+                "Conversation not found or access denied."
             },
-            400
+            404
           );
         }
 
-        const messages =
-          await getMessages(
-            conversationId
-          );
-
         return json({
           ok: true,
-          messages
+          conversation,
+
+          messages:
+            await getMessages(
+              conversation.id
+            )
         });
       }
 
       if (
-        queryAction === "conversations" ||
-        queryAction === "list"
+        action ===
+        "customer_care"
       ) {
-        const conversations =
-          await getUserConversations(
-            user
-          );
 
-        return json({
-          ok: true,
-          conversations
-        });
-      }
-
-      if (
-        queryAction === "customer_care"
-      ) {
         const conversation =
           await customerCareConversation(
-            user
-          );
-
-        const messages =
-          await getMessages(
-            conversation.id
+            user.id
           );
 
         return json({
           ok: true,
           conversation,
-          messages
+
+          messages:
+            await getMessages(
+              conversation.id
+            )
         });
       }
 
       return json({
         ok: true,
+
         conversations:
-          await getUserConversations(
-            user
+          await listConversations(
+            user.id
           )
       });
     }
 
     /*
-     * POST
+     * Only POST after this point
      */
-    if (request.method === "POST") {
 
-      const body =
-        await request.json();
-
-      const requestedAction =
-        clean(
-          body.action ||
-          queryAction
-        ).toLowerCase();
-
-      /*
-       * CUSTOMER CARE AI
-       *
-       * Supports:
-       * customer_care_ai
-       * customer-care-ai
-       * ai
-       */
-      if (
-        requestedAction ===
-          "customer_care_ai" ||
-        requestedAction ===
-          "customer-care-ai" ||
-        requestedAction === "ai"
-      ) {
-        const answer =
-          await customerCareAI(
-            body.message ||
-            body.text ||
-            body.question
-          );
-
-        return json({
-          ok: true,
-          answer,
-          message: answer,
-          reply: answer
-        });
-      }
-
-      /*
-       * CUSTOMER CARE CONVERSATION
-       */
-      if (
-        requestedAction ===
-          "customer_care"
-      ) {
-        const conversation =
-          await customerCareConversation(
-            user
-          );
-
-        const messages =
-          await getMessages(
-            conversation.id
-          );
-
-        return json({
-          ok: true,
-          conversation,
-          messages
-        });
-      }
-
-      /*
-       * SEND CUSTOMER CARE MESSAGE
-       */
-      if (
-        requestedAction ===
-          "customer_care_send" ||
-        requestedAction ===
-          "customer-care-send"
-      ) {
-        let conversationId =
-          clean(
-            body.conversation_id
-          );
-
-        if (!conversationId) {
-          const conversation =
-            await customerCareConversation(
-              user
-            );
-
-          conversationId =
-            conversation.id;
-        }
-
-        const message =
-          await sendMessage({
-            conversationId,
-            senderId: user.id,
-            senderRole:
-              "customer",
-            message:
-              body.message ||
-              body.text
-          });
-
-        const messages =
-          await getMessages(
-            conversationId
-          );
-
-        return json({
-          ok: true,
-          message,
-          messages,
-          conversation_id:
-            conversationId
-        });
-      }
-
-      /*
-       * CREATE/FIND CONVERSATION
-       */
-      if (
-        requestedAction ===
-          "create_conversation" ||
-        requestedAction ===
-          "conversation"
-      ) {
-
-        const buyerId =
-          body.buyer_id ||
-          (
-            body.sender_role ===
-            "buyer"
-              ? user.id
-              : null
-          );
-
-        const sellerId =
-          body.seller_id;
-
-        if (!buyerId) {
-          return json(
-            {
-              ok: false,
-              error:
-                "buyer_id is required."
-            },
-            400
-          );
-        }
-
-        if (!sellerId) {
-          return json(
-            {
-              ok: false,
-              error:
-                "seller_id is required."
-            },
-            400
-          );
-        }
-
-        const conversation =
-          await getOrCreateConversation({
-            buyerId,
-            sellerId,
-            businessId:
-              body.business_id
-          });
-
-        return json({
-          ok: true,
-          conversation
-        });
-      }
-
-      /*
-       * GET MESSAGES THROUGH POST
-       *
-       * Some versions of the frontend
-       * use:
-       *
-       * action: "messages"
-       */
-      if (
-        requestedAction ===
-          "messages" ||
-        requestedAction ===
-          "get_messages"
-      ) {
-
-        const conversationId =
-          clean(
-            body.conversation_id
-          );
-
-        if (!conversationId) {
-          return json(
-            {
-              ok: false,
-              error:
-                "conversation_id is required."
-            },
-            400
-          );
-        }
-
-        const messages =
-          await getMessages(
-            conversationId
-          );
-
-        return json({
-          ok: true,
-          messages
-        });
-      }
-
-      /*
-       * NORMAL SEND MESSAGE
-       *
-       * Supports:
-       * send
-       * message
-       * send_message
-       * sendMessage
-       * empty action
-       */
-      if (
-        requestedAction === "send" ||
-        requestedAction === "message" ||
-        requestedAction ===
-          "send_message" ||
-        requestedAction ===
-          "sendmessage" ||
-        requestedAction === ""
-      ) {
-
-        let conversationId =
-          clean(
-            body.conversation_id ||
-            body.conversationId
-          );
-
-        /*
-         * Automatically create a
-         * buyer/seller conversation
-         * when possible.
-         */
-        if (!conversationId) {
-
-          const sellerId =
-            body.seller_id ||
-            body.sellerId;
-
-          const businessId =
-            body.business_id ||
-            body.businessId;
-
-          if (sellerId) {
-
-            const conversation =
-              await getOrCreateConversation({
-                buyerId:
-                  body.buyer_id ||
-                  body.buyerId ||
-                  user.id,
-
-                sellerId,
-
-                businessId
-              });
-
-            conversationId =
-              conversation.id;
-          }
-        }
-
-        if (!conversationId) {
-          return json(
-            {
-              ok: false,
-              error:
-                "conversation_id is required."
-            },
-            400
-          );
-        }
-
-        /*
-         * Never trust the client
-         * to provide another user's
-         * sender ID.
-         */
-        const senderRole =
-          clean(
-            body.sender_role ||
-            body.senderRole
-          ).toLowerCase();
-
-        let safeRole =
-          "buyer";
-
-        if (
-          senderRole === "seller"
-        ) {
-          safeRole = "seller";
-        }
-
-        if (
-          senderRole === "admin"
-        ) {
-          safeRole = "admin";
-        }
-
-        if (
-          senderRole === "customer"
-        ) {
-          safeRole = "customer";
-        }
-
-        const message =
-          await sendMessage({
-            conversationId,
-            senderId: user.id,
-            senderRole: safeRole,
-            message:
-              body.message ||
-              body.text
-          });
-
-        const messages =
-          await getMessages(
-            conversationId
-          );
-
-        return json({
-          ok: true,
-          message,
-          messages,
-          conversation_id:
-            conversationId
-        });
-      }
-
+    if (
+      request.method !==
+      "POST"
+    ) {
       return json(
         {
           ok: false,
           error:
-            "Unknown chat action."
+            "Method not allowed."
         },
-        400
+        405
       );
     }
+
+    /*
+     * AI CUSTOMER CARE
+     */
+
+    if (
+      action ===
+      "ai"
+    ) {
+
+      const answer =
+        await aiReply(
+          body.message ||
+          body.text ||
+          body.question
+        );
+
+      return json({
+        ok: true,
+        answer,
+        reply: answer,
+        message: answer
+      });
+    }
+
+    /*
+     * OPEN CUSTOMER CARE
+     */
+
+    if (
+      action ===
+      "customer_care"
+    ) {
+
+      const conversation =
+        await customerCareConversation(
+          user.id
+        );
+
+      return json({
+        ok: true,
+        conversation,
+
+        messages:
+          await getMessages(
+            conversation.id
+          )
+      });
+    }
+
+    /*
+     * SEND CUSTOMER CARE MESSAGE
+     */
+
+    if (
+      action ===
+      "customer_care_send"
+    ) {
+
+      let conversationId =
+        clean(
+          body.conversation_id
+        );
+
+      if (!conversationId) {
+
+        conversationId =
+          (
+            await customerCareConversation(
+              user.id
+            )
+          ).id;
+      }
+
+      const result =
+        await sendMessage({
+          conversationId,
+          user,
+
+          message:
+            body.message ||
+            body.text,
+
+          senderRole:
+            "customer"
+        });
+
+      return json({
+        ok: true,
+        ...result,
+
+        messages:
+          await getMessages(
+            conversationId
+          )
+      });
+    }
+
+    /*
+     * GET MESSAGES
+     */
+
+    if (
+      action ===
+      "messages"
+    ) {
+
+      const conversation =
+        await getConversation(
+          body.conversation_id,
+          user.id
+        );
+
+      if (!conversation) {
+        return json(
+          {
+            ok: false,
+            error:
+              "Conversation not found or access denied."
+          },
+          404
+        );
+      }
+
+      return json({
+        ok: true,
+        conversation,
+
+        messages:
+          await getMessages(
+            conversation.id
+          )
+      });
+    }
+
+    /*
+     * LIST CONVERSATIONS
+     */
+
+    if (
+      action ===
+        "conversations" ||
+      action ===
+        "list" ||
+      action === ""
+    ) {
+
+      return json({
+        ok: true,
+
+        conversations:
+          await listConversations(
+            user.id
+          )
+      });
+    }
+
+    /*
+     * CREATE/FIND CHAT
+     */
+
+    if (
+      action ===
+        "create_conversation" ||
+      action ===
+        "conversation"
+    ) {
+
+      let buyerId =
+        clean(
+          body.buyer_id
+        );
+
+      let sellerId =
+        clean(
+          body.seller_id
+        );
+
+      const role =
+        clean(
+          body.sender_role ||
+          body.role
+        ).toLowerCase();
+
+      if (
+        !buyerId &&
+        role === "buyer"
+      ) {
+        buyerId =
+          user.id;
+      }
+
+      if (
+        !sellerId &&
+        role === "seller"
+      ) {
+        sellerId =
+          user.id;
+      }
+
+      if (
+        !buyerId ||
+        !sellerId
+      ) {
+        return json(
+          {
+            ok: false,
+            error:
+              "buyer_id and seller_id are required."
+          },
+          400
+        );
+      }
+
+      if (
+        buyerId !== user.id &&
+        sellerId !== user.id
+      ) {
+        return json(
+          {
+            ok: false,
+            error:
+              "You are not a participant in this conversation."
+          },
+          403
+        );
+      }
+
+      const conversation =
+        await getOrCreateConversation({
+          buyerId,
+          sellerId,
+
+          businessId:
+            clean(
+              body.business_id
+            ) || null
+        });
+
+      return json({
+        ok: true,
+        conversation,
+
+        messages:
+          await getMessages(
+            conversation.id
+          )
+      });
+    }
+
+    /*
+     * SEND NORMAL BUYER/SELLER MESSAGE
+     */
+
+    if (
+      action ===
+      "send"
+    ) {
+
+      let conversationId =
+        clean(
+          body.conversation_id ||
+          body.conversationId
+        );
+
+      /*
+       * If no conversation ID was supplied,
+       * create/find one from buyer and seller IDs.
+       */
+
+      if (
+        !conversationId &&
+        (
+          body.buyer_id ||
+          body.seller_id
+        )
+      ) {
+
+        let buyerId =
+          clean(
+            body.buyer_id
+          ) ||
+          user.id;
+
+        let sellerId =
+          clean(
+            body.seller_id
+          ) ||
+          user.id;
+
+        if (
+          buyerId ===
+          sellerId
+        ) {
+          return json(
+            {
+              ok: false,
+              error:
+                "Buyer and seller cannot be the same user."
+            },
+            400
+          );
+        }
+
+        if (
+          user.id !== buyerId &&
+          user.id !== sellerId
+        ) {
+          return json(
+            {
+              ok: false,
+              error:
+                "You are not a participant in this conversation."
+            },
+            403
+          );
+        }
+
+        conversationId =
+          (
+            await getOrCreateConversation({
+              buyerId,
+              sellerId,
+
+              businessId:
+                clean(
+                  body.business_id
+                ) || null
+            })
+          ).id;
+      }
+
+      if (!conversationId) {
+        return json(
+          {
+            ok: false,
+            error:
+              "conversation_id is required."
+          },
+          400
+        );
+      }
+
+      const result =
+        await sendMessage({
+          conversationId,
+          user,
+
+          message:
+            body.message ||
+            body.text,
+
+          senderRole:
+            body.sender_role ||
+            body.role
+        });
+
+      return json({
+        ok: true,
+        ...result,
+
+        messages:
+          await getMessages(
+            conversationId
+          )
+      });
+    }
+
+    /*
+     * IMPORTANT:
+     * This now accepts many aliases instead of
+     * immediately failing with "Unknown chat action".
+     */
 
     return json(
       {
         ok: false,
         error:
-          "Method not allowed."
+          `Unknown chat action: ${
+            action || "(empty)"
+          }.`
       },
-      405
+      400
     );
 
   } catch (error) {
 
     console.error(
-      "CHAT ERROR:",
+      "CHAT FUNCTION ERROR",
       error
     );
 
@@ -933,9 +1137,8 @@ export default async function handler(request) {
       {
         ok: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Chat service error."
+          error?.message ||
+          "Chat service error."
       },
       500
     );

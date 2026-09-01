@@ -3,6 +3,10 @@
  *
  * Keeps the existing Netlify function code intact while exposing the
  * same /api/* endpoints through Vercel serverless functions.
+ *
+ * IMPORTANT: route imports are explicit so Vercel's bundler can discover
+ * every backend module. The old variable-based dynamic import could be
+ * omitted from the serverless bundle.
  */
 
 function installNetlifyEnvCompatibility() {
@@ -60,8 +64,35 @@ async function normalizeNetlifyResponse(result) {
   });
 }
 
+async function loadRoute(route) {
+  switch (route) {
+    case "admin":
+      return import("../netlify/functions/admin.mjs");
+    case "auth":
+      return import("../netlify/functions/auth.mjs");
+    case "chat":
+      return import("../netlify/functions/chat.mjs");
+    case "customer-care":
+      return import("../netlify/functions/customer-care.mjs");
+    case "dashboard":
+      return import("../netlify/functions/dashboard.mjs");
+    case "orders":
+      return import("../netlify/functions/orders.mjs");
+    case "payments":
+      return import("../netlify/functions/payments.mjs");
+    case "products":
+      return import("../netlify/functions/products.mjs");
+    case "seller":
+      return import("../netlify/functions/seller.mjs");
+    default:
+      return null;
+  }
+}
+
 export default async function handler(req) {
   try {
+    // Install this before importing the old Netlify modules because some
+    // modules read Netlify.env at module initialization time.
     installNetlifyEnvCompatibility();
 
     const url = new URL(req.url);
@@ -71,7 +102,11 @@ export default async function handler(req) {
       return json({ error: "API endpoint not found" }, 404);
     }
 
-    const mod = await import(`../netlify/functions/${route}.mjs`);
+    const mod = await loadRoute(route);
+
+    if (!mod || typeof mod.default !== "function") {
+      return json({ error: "API handler unavailable" }, 500);
+    }
 
     // The AI chat function uses the Netlify event shape. Convert the
     // incoming Vercel Request to that shape without changing its logic.

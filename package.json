@@ -1,9 +1,9 @@
 {
   "name": "salga-digital-mart-production",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html dist/ && cp netlify.toml dist/netlify.toml"
+    "build": "echo SALGA Digital Mart Vercel build ready"
   },
   "dependencies": {
     "@netlify/blobs": "^9.0.0",

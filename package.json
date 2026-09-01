@@ -1,9 +1,9 @@
 {
   "name": "salga-digital-mart-production",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "scripts": {
-    "build": "echo SALGA Digital Mart Vercel build ready"
+    "build": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.mkdirSync('dist',{recursive:true}); fs.copyFileSync('index.html','dist/index.html'); console.log('SALGA Digital Mart Vercel build ready: dist/index.html created')\""
   },
   "dependencies": {
     "@netlify/blobs": "^9.0.0",

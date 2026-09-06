@@ -1,0 +1,158 @@
+(function(){
+  "use strict";
+
+  function escChat(value){
+    return String(value ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/\"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function addStyles(){
+    if(document.getElementById("salgaChatEnhancementStyles")) return;
+    const style=document.createElement("style");
+    style.id="salgaChatEnhancementStyles";
+    style.textContent=`
+      .salga-chat-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+      .salga-chat-btn{background:#075e54!important;color:#fff!important}
+      .salga-profile-btn{background:#e8ecef!important;color:#17202a!important}
+      .salga-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:16px;z-index:1000}
+      .salga-modal{background:#fff;width:min(520px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:20px;box-shadow:0 15px 50px rgba(0,0,0,.25)}
+      .salga-modal h2{margin-top:0}
+      .salga-admin-card{margin:12px 0;padding:14px;border:1px solid #d6dde1;border-radius:12px;background:#f8fafb}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureModal(){
+    if(document.getElementById("salgaBusinessModal")) return;
+    const wrap=document.createElement("div");
+    wrap.id="salgaBusinessModal";
+    wrap.className="salga-modal-backdrop hidden";
+    wrap.innerHTML=`<div class="salga-modal" role="dialog" aria-modal="true">
+      <div id="salgaBusinessModalBody"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn gray" type="button" onclick="closeSalgaBusinessProfile()">Close</button>
+      </div>
+    </div>`;
+    document.body.appendChild(wrap);
+    wrap.addEventListener("click",function(e){if(e.target===wrap)closeSalgaBusinessProfile();});
+  }
+
+  window.closeSalgaBusinessProfile=function(){
+    const modal=document.getElementById("salgaBusinessModal");
+    if(modal) modal.classList.add("hidden");
+  };
+
+  window.openSalgaBusinessProfile=function(productId){
+    const list=Array.isArray(window.salgaProductsCache)?window.salgaProductsCache:[];
+    const product=list.find(p=>String(p.id)===String(productId));
+    if(!product){alert("Business information is not available for this product right now.");return;}
+    ensureModal();
+    const businessId=product.business_id || product.businesses?.id || "";
+    const businessName=product.business_name || product.businessName || product.businesses?.business_name || "Business owner";
+    const body=document.getElementById("salgaBusinessModalBody");
+    body.innerHTML=`
+      <span class="tag">Business Profile</span>
+      <h2>${escChat(businessName)}</h2>
+      <p class="muted">Local business on SALGA Digital Mart.</p>
+      <div class="record">
+        <div class="record-title">${escChat(product.name || "Product")}</div>
+        <div>Category: ${escChat(product.category || "Other")}</div>
+        <div class="record-money">${typeof money==="function"?money(product.price):"₦"+Number(product.price||0).toLocaleString("en-NG")}</div>
+        <div class="muted">${escChat(product.description || "")}</div>
+      </div>
+      <div class="salga-chat-actions">
+        <button class="btn salga-chat-btn" type="button" ${businessId?"":"disabled"} onclick="startSalgaBusinessChat('${escChat(businessId)}')">💬 Chat with Business Owner</button>
+      </div>`;
+    document.getElementById("salgaBusinessModal").classList.remove("hidden");
+  };
+
+  async function requireBuyer(){
+    if(!window.me || window.me.role!=="buyer"){
+      alert("Please log in with your existing buyer account to chat. No separate message account is needed.");
+      if(typeof show==="function") show("account");
+      return false;
+    }
+    return true;
+  }
+
+  window.startSalgaBusinessChat=async function(businessId){
+    if(!businessId || !(await requireBuyer())) return;
+    try{
+      const data=await api("chat",{method:"POST",body:JSON.stringify({action:"start",business_id:businessId})});
+      if(!data.success || !data.conversation) throw new Error(data.error||"Unable to start business chat.");
+      closeSalgaBusinessProfile();
+      activeBuyerConversation=data.conversation.id;
+      if(typeof show==="function") show("account");
+      if(typeof buyerTab==="function") buyerTab("chat");
+      await openConversation("buyer",data.conversation.id);
+    }catch(error){alert(error.message||"Unable to start business chat.");}
+  };
+
+  window.startSalgaAdminChat=async function(){
+    if(!(await requireBuyer())) return;
+    try{
+      const data=await api("chat-admin",{method:"POST",body:JSON.stringify({})});
+      if(!data.success || !data.conversation) throw new Error(data.error||"Unable to start SALGA administration chat.");
+      activeBuyerConversation=data.conversation.id;
+      if(typeof show==="function") show("account");
+      if(typeof buyerTab==="function") buyerTab("chat");
+      await openConversation("buyer",data.conversation.id);
+    }catch(error){alert(error.message||"Unable to start SALGA administration chat.");}
+  };
+
+  function addAdminButton(){
+    const dash=document.getElementById("buyerDashboard");
+    if(!dash || dash.classList.contains("hidden") || document.getElementById("salgaAdminChatButton")) return;
+    const host=document.createElement("div");
+    host.className="salga-admin-card";
+    host.id="salgaAdminChatButton";
+    host.innerHTML=`<strong>Need help from SALGA?</strong><div class="muted" style="margin:5px 0 9px">Chat directly with SALGA Administration using your existing buyer account.</div><button class="btn salga-chat-btn" type="button" onclick="startSalgaAdminChat()">💬 Chat with SALGA Administration</button>`;
+    const tabs=dash.querySelector(".panel");
+    if(tabs) tabs.after(host); else dash.prepend(host);
+  }
+
+  function enhanceProducts(){
+    const list=Array.isArray(window.salgaProductsCache)?window.salgaProductsCache:[];
+    const cards=document.querySelectorAll("#products .product");
+    cards.forEach((card,index)=>{
+      if(card.querySelector(".salga-chat-actions")) return;
+      const product=list[index];
+      if(!product) return;
+      const businessId=product.business_id || product.businesses?.id || "";
+      const buy=card.querySelector("button[onclick*='buyProduct']");
+      if(!buy) return;
+      const actions=document.createElement("div");
+      actions.className="salga-chat-actions";
+      actions.innerHTML=`<button class="btn salga-profile-btn" type="button">View Business</button><button class="btn salga-chat-btn" type="button" ${businessId?"":"disabled"}>💬 Chat Owner</button>`;
+      actions.children[0].addEventListener("click",()=>openSalgaBusinessProfile(product.id));
+      actions.children[1].addEventListener("click",()=>startSalgaBusinessChat(businessId));
+      buy.replaceWith((()=>{const b=buy.cloneNode(true);return b;})());
+      card.appendChild(actions);
+    });
+    addAdminButton();
+  }
+
+  function install(){
+    addStyles();
+    ensureModal();
+    const original=window.loadProducts;
+    if(typeof original==="function" && !original.__salgaWrapped){
+      async function wrappedLoadProducts(){
+        const result=await original.apply(this,arguments);
+        try{window.salgaProductsCache=Array.isArray(window.products)?window.products.slice():[];}catch(_){window.salgaProductsCache=[];}
+        setTimeout(enhanceProducts,0);
+        return result;
+      }
+      wrappedLoadProducts.__salgaWrapped=true;
+      window.loadProducts=wrappedLoadProducts;
+    }
+    setInterval(enhanceProducts,1200);
+    setInterval(addAdminButton,1200);
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install); else install();
+})();

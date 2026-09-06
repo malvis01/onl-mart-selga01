@@ -66,12 +66,9 @@ async function customerCareAI(body) {
 }
 
 async function findConversation(userId, otherId, businessId, admin) {
-  let query = supabase.from("chat_conversations").select("*").limit(1);
   if (admin) {
-    query = userId === ADMIN_ID
-      ? (await supabase.from("chat_conversations").select("*").eq("admin_involved", true).or(`buyer_id.eq.${otherId},seller_id.eq.${otherId}`).limit(1))
-      : (await supabase.from("chat_conversations").select("*").eq("admin_involved", true).or(`buyer_id.eq.${userId},seller_id.eq.${userId}`).limit(1));
-    return query.data?.[0] || null;
+    const { data } = await supabase.from("chat_conversations").select("*").eq("admin_involved", true).or(`buyer_id.eq.${userId},seller_id.eq.${userId}`).limit(1);
+    return data?.[0] || null;
   }
   const { data } = await supabase.from("chat_conversations").select("*").eq("buyer_id", userId).eq("seller_id", otherId).eq("business_id", businessId || "00000000-0000-0000-0000-000000000000").eq("admin_involved", false).limit(1);
   return data?.[0] || null;
@@ -82,6 +79,15 @@ async function startConversation(user, profile, body) {
   const businessId = body.business_id ? String(body.business_id) : null;
   const admin = isAdmin(user, profile);
 
+  if (body.action === "start_admin") {
+    if (admin) return json({ success: false, error: "Admin cannot start a conversation with administration." }, 400);
+    const existing = await findConversation(user.id, ADMIN_ID, null, true);
+    if (existing) return json({ success: true, conversation: existing });
+    const { data, error } = await supabase.from("chat_conversations").insert({ buyer_id: String(profile.role).toLowerCase() === "buyer" ? user.id : null, seller_id: String(profile.role).toLowerCase() === "seller" ? user.id : null, admin_involved: true, business_id: null }).select("*").single();
+    if (error) throw error;
+    return json({ success: true, conversation: data });
+  }
+
   if (!requestedId && !businessId) return json({ success: false, error: "Recipient or business is required." }, 400);
 
   let recipientId = requestedId;
@@ -90,6 +96,7 @@ async function startConversation(user, profile, body) {
     if (error) throw error;
     if (!business) return json({ success: false, error: "Business not found." }, 404);
     if (!admin && business.owner_id === user.id) return json({ success: false, error: "You cannot message your own business." }, 400);
+    if (!admin && String(business.status || "active").toLowerCase() !== "active") return json({ success: false, error: "This business is not currently active." }, 400);
     recipientId = business.owner_id;
   }
 
@@ -173,16 +180,11 @@ async function listConversations(user, profile) {
   const { data, error } = await query;
   if (error) throw error;
 
-  const ids = new Set();
   const conversations = [];
   for (const c of data || []) {
     const otherId = c.buyer_id === user.id ? c.seller_id : c.seller_id === user.id ? c.buyer_id : (c.buyer_id || c.seller_id);
-    if (!admin && !otherId) continue;
     let other = null;
     if (otherId) other = await getProfile(otherId);
-    const key = String(c.id);
-    if (ids.has(key)) continue;
-    ids.add(key);
     conversations.push({
       id: c.id,
       conversation_id: c.id,
@@ -212,7 +214,7 @@ export default async function handler(req) {
     const profile = await getProfile(user.id);
     if (!profile) return json({ success: false, error: "User profile not found." }, 404);
 
-    if (body.action === "start") return await startConversation(user, profile, body);
+    if (body.action === "start" || body.action === "start_admin") return await startConversation(user, profile, body);
     if (body.action === "conversations") return await listConversations(user, profile);
     if (body.action === "messages") return await getConversation(user, profile, body.conversation_id || body.conversationId);
     if (body.action === "send") return await sendMessage(user, profile, body);

@@ -1,1 +1,5456 @@
 <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SALGA Digital Mart</title>
+<meta name="description" content="SALGA Digital Mart marketplace">
+
+<style>
+:root{
+  --p:#075e54;
+  --p2:#0b806f;
+  --bg:#f5f7f8;
+  --card:#fff;
+  --text:#17202a;
+  --muted:#68727d;
+  --danger:#b42318;
+  --border:#d6dde1;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  background:var(--p);
+  color:#fff;
+  padding:14px 18px;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.bar{
+  max-width:1150px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.logo{
+  font-weight:800;
+  font-size:21px;
+}
+.spacer{flex:1}
+button,input,select,textarea{font:inherit}
+button{
+  border:0;
+  border-radius:9px;
+  padding:10px 14px;
+  cursor:pointer;
+}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.btn{
+  background:var(--p2);
+  color:#fff;
+}
+.btn.light{
+  background:#fff;
+  color:var(--p);
+}
+.btn.danger{
+  background:var(--danger);
+  color:#fff;
+}
+.btn.gray{
+  background:#e8ecef;
+  color:#17202a;
+}
+main{
+  max-width:1150px;
+  margin:auto;
+  padding:22px;
+}
+.hero{
+  background:linear-gradient(135deg,#075e54,#0b806f);
+  color:#fff;
+  border-radius:18px;
+  padding:28px;
+  margin-bottom:20px;
+}
+.hero h1{
+  margin:0 0 8px;
+  font-size:34px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:15px;
+}
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 2px 10px #0000000d;
+}
+.product img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:10px;
+  background:#e9eeee;
+}
+.price{
+  font-size:20px;
+  font-weight:800;
+  margin:8px 0;
+}
+.muted{
+  color:var(--muted);
+  font-size:14px;
+}
+.panel{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:18px;
+}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.form{
+  max-width:520px;
+  margin:auto;
+}
+.field{
+  margin:10px 0;
+}
+.field label{
+  display:block;
+  font-weight:650;
+  margin-bottom:5px;
+}
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+.field textarea{
+  min-height:100px;
+  resize:vertical;
+}
+.hidden{display:none!important}
+.tag{
+  display:inline-block;
+  background:#e5f5f2;
+  color:#075e54;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  font-weight:700;
+}
+.notice{
+  padding:12px;
+  border-radius:9px;
+  background:#fff5d9;
+  margin:10px 0;
+}
+.success{background:#e8f7ee}
+.error{
+  background:#fdecec;
+  color:#8b1e1e;
+}
+.status{
+  margin-top:12px;
+  min-height:10px;
+}
+footer{
+  text-align:center;
+  color:var(--muted);
+  padding:30px;
+}
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;
+  margin-bottom:18px;
+}
+.stat{
+  background:#fff;
+  border-radius:14px;
+  padding:17px;
+  box-shadow:0 2px 10px #0000000d;
+}
+.stat-label{
+  color:var(--muted);
+  font-size:13px;
+}
+.stat-value{
+  font-size:24px;
+  font-weight:800;
+  margin-top:7px;
+}
+.stat-note{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:5px;
+}
+.balance-stat{
+  border:2px solid var(--p);
+}
+.commission-stat{
+  border-left:4px solid var(--p);
+}
+.dashboard-tabs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:3px;
+}
+.dashboard-tabs button{
+  white-space:nowrap;
+}
+.dashboard-tab{
+  margin-top:16px;
+}
+.record{
+  background:#fff;
+  border:1px solid #e1e6e9;
+  border-radius:11px;
+  padding:15px;
+  margin-bottom:10px;
+}
+.record-title{
+  font-weight:750;
+  margin-bottom:6px;
+}
+.record-money{
+  font-size:19px;
+  font-weight:800;
+  margin:6px 0;
+}
+.record-line{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid #edf0f2;
+}
+.record-line:last-child{
+  border-bottom:0;
+}
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
+}
+.data-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:650px;
+}
+.data-table th,
+.data-table td{
+  text-align:left;
+  padding:11px;
+  border-bottom:1px solid #e6eaed;
+  vertical-align:top;
+}
+.data-table th{
+  background:#f7f9fa;
+}
+.chat-box{
+  background:#f4f7f8;
+  min-height:250px;
+  max-height:420px;
+  overflow-y:auto;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+.chat-message{
+  background:#fff;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:8px;
+}
+.chat-message.mine{
+  background:#e3f4f0;
+}
+.chat-message.ai{
+  background:#eef7ff;
+  border-left:4px solid var(--p2);
+}
+.chat-message .time{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:4px;
+}
+.conversations{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  margin-bottom:12px;
+}
+.conversation{
+  min-width:170px;
+  padding:10px;
+  background:#eef2f3;
+  border-radius:9px;
+  cursor:pointer;
+}
+.conversation.active{
+  background:#d9efeb;
+  color:var(--p);
+  font-weight:700;
+}
+.upload-preview{
+  width:100%;
+  max-width:260px;
+  max-height:220px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-top:8px;
+}
+.file-help{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:5px;
+}
+.ai-care{
+  background:#eef7ff;
+  border:1px solid #d8eafa;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.ai-care h3{
+  margin-top:0;
+}
+@media(max-width:650px){
+  main{padding:14px}
+  .hero h1{font-size:27px}
+  .bar{flex-wrap:wrap}
+  .bar button{font-size:13px}
+  .dashboard-tabs button{
+    font-size:12px;
+    padding:9px 10px;
+  }
+  .stat-value{
+    font-size:21px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="bar">
+
+  <div class="logo">SALGA Digital Mart</div>
+
+  <div class="spacer"></div>
+
+  <button class="btn light" type="button" onclick="show('shop')">
+    Shop
+  </button>
+
+  <button class="btn light" type="button" onclick="show('seller')">
+    Sell
+  </button>
+
+  <button class="btn light" type="button" onclick="show('account')">
+    Account
+  </button>
+
+  <button class="btn light" type="button" onclick="show('care')">
+    Customer Care
+  </button>
+
+  <button class="btn light" type="button" onclick="show('admin')">
+    Admin
+  </button>
+
+  <button
+    id="logout"
+    class="btn danger hidden"
+    type="button"
+    onclick="logout()">
+    Logout
+  </button>
+
+</div>
+</header>
+
+<main>
+
+<!-- =====================================================
+     SHOP
+===================================================== -->
+
+<section id="shop">
+
+  <div class="hero">
+
+    <h1>Buy and sell with SALGA.</h1>
+
+    <p>
+      Shop products from local businesses, grow your business,
+      and promote your products.
+    </p>
+
+    <div class="row">
+
+      <button
+        class="btn light"
+        type="button"
+        onclick="show('seller')">
+        Create business account
+      </button>
+
+      <button
+        class="btn light"
+        type="button"
+        onclick="show('account')">
+        Buyer account
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="panel">
+
+    <div class="row">
+
+      <input
+        id="search"
+        placeholder="Search products..."
+        style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px"
+        oninput="loadProducts()">
+
+      <select
+        id="category"
+        onchange="loadProducts()"
+        style="padding:11px;border:1px solid #d6dde1;border-radius:8px">
+
+        <option value="">All categories</option>
+        <option value="Fashion">Fashion</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Food">Food</option>
+        <option value="Beauty">Beauty</option>
+        <option value="Home">Home</option>
+        <option value="Services">Services</option>
+        <option value="Other">Other</option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+  <div id="products" class="grid"></div>
+
+</section>
+
+
+<!-- =====================================================
+     BUYER
+===================================================== -->
+
+<section id="account" class="hidden">
+
+  <div id="buyerLoginPanel" class="panel form">
+
+    <h2>Buyer account</h2>
+
+    <p class="muted">
+      Create an account or log in with your phone number and password.
+    </p>
+
+    <div id="buyerStatus" class="status"></div>
+
+    <div id="buyerForm">
+
+      <div class="field">
+
+        <label for="bphone">
+          Phone number
+        </label>
+
+        <input
+          id="bphone"
+          type="tel"
+          autocomplete="tel"
+          placeholder="+2348012345678">
+
+      </div>
+
+      <div class="field">
+
+        <label for="bpass">
+          Password
+        </label>
+
+        <input
+          id="bpass"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Enter password">
+
+      </div>
+
+      <div class="row">
+
+        <button
+          id="buyerLoginBtn"
+          class="btn"
+          type="button"
+          onclick="buyerAuth('login')">
+          Login
+        </button>
+
+        <button
+          id="buyerRegisterBtn"
+          class="btn gray"
+          type="button"
+          onclick="buyerAuth('register')">
+          Create account
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div id="buyerDashboard" class="hidden">
+
+    <div class="hero">
+
+      <h1>Buyer Dashboard</h1>
+
+      <p id="buyerWelcome">
+        Welcome.
+      </p>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="stat">
+        <div class="stat-label">Total orders</div>
+        <div id="buyerTotalOrders" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Pending orders</div>
+        <div id="buyerPendingOrders" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Completed orders</div>
+        <div id="buyerCompletedOrders" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Total spent</div>
+        <div id="buyerTotalSpent" class="stat-value">₦0.00</div>
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="dashboard-tabs">
+
+        <button class="btn" onclick="buyerTab('orders')">
+          My Orders
+        </button>
+
+        <button class="btn gray" onclick="buyerTab('transactions')">
+          Transactions
+        </button>
+
+        <button class="btn gray" onclick="buyerTab('payments')">
+          Payments
+        </button>
+
+        <button class="btn gray" onclick="buyerTab('chat')">
+          Messages
+        </button>
+
+        <button class="btn gray" onclick="buyerTab('profile')">
+          Profile
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="buyerOrdersTab" class="dashboard-tab panel">
+
+      <h2>My Orders</h2>
+
+      <div id="buyerOrders">
+        Loading orders...
+      </div>
+
+    </div>
+
+    <div id="buyerTransactionsTab" class="dashboard-tab panel hidden">
+
+      <h2>Transaction History</h2>
+
+      <div id="buyerTransactions">
+        Loading transactions...
+      </div>
+
+    </div>
+
+    <div id="buyerPaymentsTab" class="dashboard-tab panel hidden">
+
+      <h2>Make Payment</h2>
+
+      <p class="muted">
+        All amounts are processed in Nigerian Naira (NGN).
+      </p>
+
+      <div class="field">
+
+        <label>Amount (NGN)</label>
+
+        <input
+          id="buyerPaymentAmount"
+          type="number"
+          min="100"
+          step="1"
+          placeholder="Enter amount">
+
+      </div>
+
+      <div class="field">
+
+        <label>Payment method</label>
+
+        <select id="buyerPaymentMethod">
+
+          <option value="paystack">Paystack</option>
+          <option value="card">Debit/Credit Card</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="ussd">USSD</option>
+          <option value="opay">OPay</option>
+          <option value="palmpay">PalmPay</option>
+          <option value="moniepoint">Moniepoint</option>
+          <option value="bank">Nigerian Bank</option>
+
+        </select>
+
+      </div>
+
+      <button class="btn" onclick="startPayment()">
+        Continue to secure payment
+      </button>
+
+      <div id="buyerPaymentMessage"></div>
+
+    </div>
+
+    <div id="buyerChatTab" class="dashboard-tab panel hidden">
+
+      <h2>Messages</h2>
+
+      <div id="buyerConversations" class="conversations"></div>
+
+      <div id="buyerChatMessages" class="chat-box"></div>
+
+      <div class="row">
+
+        <input
+          id="buyerChatInput"
+          placeholder="Write a message..."
+          style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px">
+
+        <button class="btn" onclick="sendBuyerMessage()">
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="buyerProfileTab" class="dashboard-tab panel hidden">
+
+      <h2>My Profile</h2>
+
+      <div id="buyerProfile"></div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     BUSINESS OWNER
+===================================================== -->
+
+<section id="seller" class="hidden">
+
+  <div id="sellerLoginPanel" class="panel form">
+
+    <h2>Business owner account</h2>
+
+    <p class="muted">
+      Register or log in to manage your business.
+    </p>
+
+    <div id="sellerStatus" class="status"></div>
+
+    <div class="field">
+      <label for="sname">Business name</label>
+      <input id="sname" type="text">
+    </div>
+
+    <div class="field">
+      <label for="sphone">Owner phone</label>
+      <input
+        id="sphone"
+        type="tel"
+        placeholder="+2348012345678">
+    </div>
+
+    <div class="field">
+      <label for="semail">
+        Email for business notifications
+      </label>
+      <input id="semail" type="email">
+    </div>
+
+    <div class="field">
+      <label for="spass">Password</label>
+      <input id="spass" type="password">
+    </div>
+
+    <div class="field">
+      <label for="sbank">Bank name</label>
+      <input id="sbank" placeholder="e.g. GTBank">
+    </div>
+
+    <div class="field">
+      <label for="sbankcode">Bank code</label>
+      <input
+        id="sbankcode"
+        inputmode="numeric"
+        placeholder="e.g. 058">
+    </div>
+
+    <div class="field">
+      <label for="sacct">Account number</label>
+      <input
+        id="sacct"
+        inputmode="numeric"
+        maxlength="10">
+    </div>
+
+    <div class="row">
+
+      <button
+        id="sellerRegisterBtn"
+        class="btn"
+        onclick="sellerRegister()">
+        Create business
+      </button>
+
+      <button
+        id="sellerLoginBtn"
+        class="btn gray"
+        onclick="sellerLogin()">
+        Business login
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div id="sellerDashboard" class="hidden">
+
+    <div class="hero">
+
+      <h1>Business Owner Dashboard</h1>
+
+      <p id="sellerWelcome">
+        Manage your business.
+      </p>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="stat balance-stat">
+
+        <div class="stat-label">
+          Available balance
+        </div>
+
+        <div id="sellerBalance" class="stat-value">
+          ₦0.00
+        </div>
+
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Pending balance
+        </div>
+
+        <div id="sellerPendingBalance" class="stat-value">
+          ₦0.00
+        </div>
+
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Total sales
+        </div>
+
+        <div id="sellerTotalSales" class="stat-value">
+          ₦0.00
+        </div>
+
+      </div>
+
+      <div class="stat commission-stat">
+
+        <div class="stat-label">
+          5% marketplace commission
+        </div>
+
+        <div id="sellerMarketplaceCommission" class="stat-value">
+          ₦0.00
+        </div>
+
+      </div>
+
+      <div class="stat commission-stat">
+
+        <div class="stat-label">
+          3% promotion commission
+        </div>
+
+        <div id="sellerPromotionCommission" class="stat-value">
+          ₦0.00
+        </div>
+
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Total orders
+        </div>
+
+        <div id="sellerOrderCount" class="stat-value">
+          0
+        </div>
+
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Products
+        </div>
+
+        <div id="sellerProductCount" class="stat-value">
+          0
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="dashboard-tabs">
+
+        <button class="btn" onclick="sellerTab('overview')">
+          Overview
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('orders')">
+          Orders
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('transactions')">
+          Transactions
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('products')">
+          Products
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('promotions')">
+          Promotions
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('withdraw')">
+          Withdraw
+        </button>
+
+        <button class="btn gray" onclick="sellerTab('chat')">
+          Messages
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="sellerOverviewTab" class="dashboard-tab panel">
+
+      <h2>Business Overview</h2>
+
+      <div id="sellerOverview">
+        Loading...
+      </div>
+
+    </div>
+
+    <div id="sellerOrdersTab" class="dashboard-tab panel hidden">
+
+      <h2>Customer Orders</h2>
+
+      <div id="sellerOrders">
+        Loading orders...
+      </div>
+
+    </div>
+
+    <div id="sellerTransactionsTab" class="dashboard-tab panel hidden">
+
+      <h2>Financial Records</h2>
+
+      <div id="sellerTransactions">
+        Loading transactions...
+      </div>
+
+    </div>
+
+
+    <div id="sellerProductsTab" class="dashboard-tab panel hidden">
+
+      <h2>My Products</h2>
+
+      <div id="sellerProducts"></div>
+
+      <hr>
+
+      <h3>Upload product</h3>
+
+      <div id="productUploadStatus"></div>
+
+      <div class="field">
+        <label for="productName">
+          Product name
+        </label>
+        <input id="productName" type="text">
+      </div>
+
+      <div class="field">
+        <label for="productPrice">
+          Price (NGN)
+        </label>
+        <input
+          id="productPrice"
+          type="number"
+          min="1"
+          step="1">
+      </div>
+
+      <div class="field">
+        <label for="productCategory">
+          Category
+        </label>
+
+        <select id="productCategory">
+          <option value="Fashion">Fashion</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Food">Food</option>
+          <option value="Beauty">Beauty</option>
+          <option value="Home">Home</option>
+          <option value="Services">Services</option>
+          <option value="Other">Other</option>
+        </select>
+
+      </div>
+
+      <div class="field">
+        <label for="productDescription">
+          Description
+        </label>
+
+        <textarea id="productDescription"></textarea>
+      </div>
+
+      <div class="field">
+
+        <label for="productImageFile">
+          Product image
+        </label>
+
+        <input
+          id="productImageFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onchange="previewProductImage()">
+
+        <div class="file-help">
+          Upload a JPG, PNG, WEBP or GIF image. Maximum recommended size: 5 MB.
+        </div>
+
+        <img
+          id="productImagePreview"
+          class="upload-preview hidden"
+          alt="Product image preview">
+
+      </div>
+
+      <div class="field">
+
+        <label for="productImage">
+          Or image URL
+        </label>
+
+        <input
+          id="productImage"
+          type="url"
+          placeholder="https://..."
+          oninput="clearProductFileIfUrlUsed()">
+
+        <div class="file-help">
+          A real uploaded image file is preferred. The backend stores uploaded
+          images in Supabase Storage.
+        </div>
+
+      </div>
+
+      <button
+        id="uploadProductBtn"
+        class="btn"
+        onclick="uploadProduct()">
+        Upload Product
+      </button>
+
+    </div>
+
+
+    <div id="sellerPromotionsTab" class="dashboard-tab panel hidden">
+
+      <h2>Promote a Product</h2>
+
+      <p class="muted">
+        Promotion and advertising transactions are recorded separately.
+        The SALGA platform promotion commission is 3%.
+      </p>
+
+      <div id="sellerPromotionProducts">
+        Loading products...
+      </div>
+
+    </div>
+
+
+    <div id="sellerWithdrawTab" class="dashboard-tab panel hidden">
+
+      <h2>Withdraw Business Balance</h2>
+
+      <div id="sellerWithdrawalInfo"></div>
+
+      <div class="field">
+
+        <label>
+          Amount (NGN)
+        </label>
+
+        <input
+          id="sellerWithdrawAmount"
+          type="number"
+          min="1">
+
+      </div>
+
+      <button
+        class="btn"
+        onclick="sellerWithdrawal()">
+        Request withdrawal
+      </button>
+
+      <div id="sellerWithdrawMessage"></div>
+
+    </div>
+
+
+    <div id="sellerChatTab" class="dashboard-tab panel hidden">
+
+      <h2>Customer Messages</h2>
+
+      <div id="sellerConversations" class="conversations"></div>
+
+      <div id="sellerChatMessages" class="chat-box"></div>
+
+      <div class="row">
+
+        <input
+          id="sellerChatInput"
+          placeholder="Write a message..."
+          style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px">
+
+        <button
+          class="btn"
+          onclick="sendSellerMessage()">
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     CUSTOMER CARE
+===================================================== -->
+
+<section id="care" class="hidden">
+
+  <div class="panel">
+
+    <h2>💬 SALGA Customer Care</h2>
+
+    <p class="muted">
+      Get help with buying, selling, orders, payments, accounts,
+      promotions, or contacting a business.
+    </p>
+
+    <div class="ai-care">
+
+      <h3>🤖 SALGA AI Customer Care</h3>
+
+      <p class="muted">
+        Ask a question and the customer-care assistant will help you
+        with the SALGA Digital Mart platform.
+      </p>
+
+      <div class="field">
+
+        <label for="aiCareInput">
+          What do you need help with?
+        </label>
+
+        <textarea
+          id="aiCareInput"
+          placeholder="For example: How do I buy a product? How can I upload my product? I have a problem with my order..."></textarea>
+
+      </div>
+
+      <button
+        id="aiCareButton"
+        class="btn"
+        onclick="askAICustomerCare()">
+        Ask Customer Care
+      </button>
+
+      <div id="aiCareResponse"></div>
+
+    </div>
+
+    <h3>Contact Platform Customer Care</h3>
+
+    <div
+      id="careChat"
+      class="chat-box">
+    </div>
+
+    <div class="row">
+
+      <input
+        id="careInput"
+        placeholder="Write your message..."
+        style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px"
+        onkeydown="if(event.key==='Enter')sendCareMessage()">
+
+      <button
+        class="btn"
+        onclick="sendCareMessage()">
+        Send
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     ADMIN
+===================================================== -->
+
+<section id="admin" class="hidden">
+
+  <div id="adminLoginPanel" class="panel form">
+
+    <h2>Admin access</h2>
+
+    <p class="muted">
+      Admin access is restricted.
+    </p>
+
+    <div class="field">
+
+      <label for="apassEmail">
+        Admin email
+      </label>
+
+      <input
+        id="apassEmail"
+        type="email"
+        autocomplete="email">
+
+    </div>
+
+    <div class="field">
+
+      <label for="apass">
+        Password
+      </label>
+
+      <input
+        id="apass"
+        type="password"
+        autocomplete="current-password">
+
+    </div>
+
+    <button
+      class="btn"
+      onclick="adminLogin()">
+      Open admin dashboard
+    </button>
+
+    <div id="adminMsg"></div>
+
+  </div>
+
+
+  <div id="adminDashboard" class="hidden">
+
+    <div class="hero">
+
+      <h1>Admin Dashboard</h1>
+
+      <p>
+        Full SALGA Digital Mart platform overview.
+      </p>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="stat">
+        <div class="stat-label">Registered buyers</div>
+        <div id="adminBuyers" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Business owners</div>
+        <div id="adminBusinesses" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Products</div>
+        <div id="adminProducts" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Orders</div>
+        <div id="adminOrders" class="stat-value">0</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Transaction volume</div>
+        <div id="adminTransactionVolume" class="stat-value">₦0.00</div>
+      </div>
+
+      <div class="stat commission-stat">
+        <div class="stat-label">5% transaction commission</div>
+        <div id="adminFivePercent" class="stat-value">₦0.00</div>
+      </div>
+
+      <div class="stat commission-stat">
+        <div class="stat-label">3% promotion/ads commission</div>
+        <div id="adminThreePercent" class="stat-value">₦0.00</div>
+      </div>
+
+      <div class="stat balance-stat">
+        <div class="stat-label">Total platform commission</div>
+        <div id="adminTotalCommission" class="stat-value">₦0.00</div>
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="dashboard-tabs">
+
+        <button class="btn" onclick="adminTab('overview')">
+          Overview
+        </button>
+
+        <button class="btn gray" onclick="adminTab('users')">
+          Users
+        </button>
+
+        <button class="btn gray" onclick="adminTab('businesses')">
+          Businesses
+        </button>
+
+        <button class="btn gray" onclick="adminTab('orders')">
+          Orders
+        </button>
+
+        <button class="btn gray" onclick="adminTab('transactions')">
+          Transactions
+        </button>
+
+        <button class="btn gray" onclick="adminTab('commissions')">
+          Commissions
+        </button>
+
+        <button class="btn gray" onclick="adminTab('promotions')">
+          Promotions
+        </button>
+
+        <button class="btn gray" onclick="adminTab('withdrawals')">
+          Withdrawals
+        </button>
+
+        <button class="btn gray" onclick="adminTab('chat')">
+          Customer Care
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="adminOverviewTab" class="dashboard-tab panel">
+
+      <h2>Platform Overview</h2>
+
+      <div id="adminOverview"></div>
+
+    </div>
+
+    <div id="adminUsersTab" class="dashboard-tab panel hidden">
+
+      <h2>Registered Users</h2>
+
+      <div id="adminUsers">
+        Loading users...
+      </div>
+
+    </div>
+
+    <div id="adminBusinessesTab" class="dashboard-tab panel hidden">
+
+      <h2>Business Owners</h2>
+
+      <div id="adminBusinessList">
+        Loading businesses...
+      </div>
+
+    </div>
+
+    <div id="adminOrdersTab" class="dashboard-tab panel hidden">
+
+      <h2>All Orders</h2>
+
+      <div id="adminOrderList">
+        Loading orders...
+      </div>
+
+    </div>
+
+    <div id="adminTransactionsTab" class="dashboard-tab panel hidden">
+
+      <h2>All Transactions</h2>
+
+      <div id="adminTransactionList">
+        Loading transactions...
+      </div>
+
+    </div>
+
+    <div id="adminCommissionsTab" class="dashboard-tab panel hidden">
+
+      <h2>Platform Commissions</h2>
+
+      <div class="dashboard-grid">
+
+        <div class="stat commission-stat">
+
+          <div class="stat-label">
+            5% marketplace commission
+          </div>
+
+          <div id="commission5Display" class="stat-value">
+            ₦0.00
+          </div>
+
+        </div>
+
+        <div class="stat commission-stat">
+
+          <div class="stat-label">
+            3% promotion/ads commission
+          </div>
+
+          <div id="commission3Display" class="stat-value">
+            ₦0.00
+          </div>
+
+        </div>
+
+        <div class="stat balance-stat">
+
+          <div class="stat-label">
+            Total commission
+          </div>
+
+          <div id="commissionTotalDisplay" class="stat-value">
+            ₦0.00
+          </div>
+
+        </div>
+
+      </div>
+
+      <div id="adminCommissionList"></div>
+
+    </div>
+
+    <div id="adminPromotionsTab" class="dashboard-tab panel hidden">
+
+      <h2>Promotion & Advertising</h2>
+
+      <div id="adminPromotionList">
+        Loading promotions...
+      </div>
+
+    </div>
+
+    <div id="adminWithdrawalsTab" class="dashboard-tab panel hidden">
+
+      <h2>Commission Withdrawals</h2>
+
+      <div class="notice">
+
+        Admin commission withdrawals are available only
+        when accumulated commission is above ₦500,000.
+
+      </div>
+
+      <div id="adminWithdrawalInfo"></div>
+
+      <div class="field">
+
+        <label>
+          Withdrawal amount (NGN)
+        </label>
+
+        <input
+          id="adminWithdrawAmount"
+          type="number"
+          min="500001">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Nigerian bank
+        </label>
+
+        <input
+          id="adminWithdrawBank"
+          placeholder="Bank name">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Bank code
+        </label>
+
+        <input
+          id="adminWithdrawBankCode"
+          inputmode="numeric">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Account number
+        </label>
+
+        <input
+          id="adminWithdrawAccount"
+          inputmode="numeric"
+          maxlength="10">
+
+      </div>
+
+      <button
+        class="btn"
+        onclick="adminWithdrawal()">
+        Request commission withdrawal
+      </button>
+
+      <div id="adminWithdrawMessage"></div>
+
+    </div>
+
+    <div id="adminChatTab" class="dashboard-tab panel hidden">
+
+      <h2>Customer Care</h2>
+
+      <div id="adminConversations" class="conversations"></div>
+
+      <div id="adminChatMessages" class="chat-box"></div>
+
+      <div class="row">
+
+        <input
+          id="adminChatInput"
+          placeholder="Reply to user..."
+          style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px">
+
+        <button
+          class="btn"
+          onclick="sendAdminMessage()">
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+  SALGA Digital Mart • 5% marketplace commission • 3% promotion/ads commission
+</footer>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+let me = null;
+let session = null;
+let products = [];
+
+let activeBuyerConversation = null;
+let activeSellerConversation = null;
+let activeAdminConversation = null;
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+function esc(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================================
+   MONEY
+========================================================= */
+
+function money(value){
+
+  return "₦" +
+    Number(value || 0).toLocaleString(
+      "en-NG",
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    );
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function show(id){
+
+  document
+    .querySelectorAll("main > section")
+    .forEach(section => {
+      section.classList.add("hidden");
+    });
+
+  const section = $(id);
+
+  if(!section){
+    return;
+  }
+
+  section.classList.remove("hidden");
+
+  if(id === "shop"){
+    loadProducts();
+  }
+
+  if(id === "account"){
+    renderBuyer();
+  }
+
+  if(id === "seller"){
+    renderSeller();
+  }
+
+  if(id === "care"){
+    loadCare();
+  }
+
+  if(id === "admin"){
+
+    if(localStorage.getItem("adminToken")){
+      renderAdmin();
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function status(id,message,type="error"){
+
+  const el = $(id);
+
+  if(!el){
+    return;
+  }
+
+  el.innerHTML =
+    `<div class="notice ${type}">
+      ${esc(message)}
+    </div>`;
+
+}
+
+
+/* =========================================================
+   API
+========================================================= */
+
+async function api(path,options={}){
+
+  const isFormData =
+    options.body instanceof FormData;
+
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if(!isFormData){
+    headers["Content-Type"] =
+      "application/json";
+  }
+
+  if(session?.access_token){
+
+    headers.Authorization =
+      "Bearer " +
+      session.access_token;
+
+  }
+
+  const adminToken =
+    localStorage.getItem("adminToken");
+
+  if(adminToken){
+
+    headers.Authorization =
+      "Bearer " +
+      adminToken;
+
+  }
+
+  let response;
+
+  try{
+
+    response = await fetch(
+      "/api/" + path,
+      {
+        ...options,
+        headers
+      }
+    );
+
+  }catch(error){
+
+    throw new Error(
+      "Unable to connect to the server. Please check your internet connection."
+    );
+
+  }
+
+  const text =
+    await response.text();
+
+  let data = {};
+
+  try{
+
+    data =
+      text
+        ? JSON.parse(text)
+        : {};
+
+  }catch(error){
+
+    throw new Error(
+      "The server returned an invalid response."
+    );
+
+  }
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      data.message ||
+      "Request failed."
+    );
+
+  }
+
+  return data;
+
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+async function loadProducts(){
+
+  const box = $("products");
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML =
+    `<div class="panel">
+      Loading products...
+    </div>`;
+
+  try{
+
+    const data =
+      await api("products");
+
+    products =
+      Array.isArray(data.products)
+        ? data.products
+        : [];
+
+    const query =
+      (
+        $("search")?.value ||
+        ""
+      ).trim().toLowerCase();
+
+    const category =
+      $("category")?.value ||
+      "";
+
+    const list =
+      products.filter(product => {
+
+        const searchable =
+          (
+            product.name || ""
+          ) +
+          " " +
+          (
+            product.description || ""
+          ) +
+          " " +
+          (
+            product.category || ""
+          ) +
+          " " +
+          (
+            product.business_name || ""
+          );
+
+        return (
+          (!query ||
+            searchable
+              .toLowerCase()
+              .includes(query)
+          ) &&
+          (
+            !category ||
+            product.category === category
+          )
+        );
+
+      });
+
+    if(!list.length){
+
+      box.innerHTML =
+        `<div class="panel">
+          No products are currently available.
+        </div>`;
+
+      return;
+
+    }
+
+    box.innerHTML =
+      list.map(product => {
+
+        const image =
+          product.image_url ||
+          product.image ||
+          product.imageUrl ||
+          "";
+
+        return `
+
+          <div class="card product">
+
+            ${
+              image
+                ? `
+                  <img
+                    src="${esc(image)}"
+                    alt="${esc(product.name || "Product")}"
+                    loading="lazy"
+                    onerror="this.style.display='none'">
+                `
+                : `
+                  <div
+                    style="
+                      height:160px;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#e9eeee;
+                      border-radius:10px;
+                      color:#68727d;
+                      margin-bottom:10px">
+                    No image
+                  </div>
+                `
+            }
+
+            <span class="tag">
+              ${esc(
+                product.category ||
+                "Other"
+              )}
+            </span>
+
+            <h3>
+              ${esc(product.name || "")}
+            </h3>
+
+            <p class="muted">
+              ${esc(
+                product.description ||
+                ""
+              )}
+            </p>
+
+            <div class="price">
+              ${money(product.price)}
+            </div>
+
+            <p class="muted">
+              Seller:
+              ${esc(
+                product.business_name ||
+                product.businessName ||
+                product.businesses?.business_name ||
+                "Business owner"
+              )}
+            </p>
+
+            <button
+              class="btn"
+              onclick="buyProduct('${esc(product.id)}')">
+              Buy now
+            </button>
+
+          </div>
+
+        `;
+
+      }).join("");
+
+  }catch(error){
+
+    box.innerHTML =
+      `<div class="panel error">
+        ${esc(error.message)}
+      </div>`;
+
+  }
+
+}
+
+
+/* =========================================================
+   BUYER AUTH
+========================================================= */
+
+async function buyerAuth(action){
+
+  const phone =
+    $("bphone").value.trim();
+
+  const password =
+    $("bpass").value;
+
+  if(!phone || !password){
+
+    status(
+      "buyerStatus",
+      "Phone number and password are required."
+    );
+
+    return;
+  }
+
+  if(password.length < 6){
+
+    status(
+      "buyerStatus",
+      "Password must contain at least 6 characters."
+    );
+
+    return;
+  }
+
+  const button =
+    action === "login"
+      ? $("buyerLoginBtn")
+      : $("buyerRegisterBtn");
+
+  if(button){
+    button.disabled = true;
+  }
+
+  status(
+    "buyerStatus",
+    action === "register"
+      ? "Creating account..."
+      : "Logging in...",
+    "success"
+  );
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action,
+            role:"buyer",
+            phone,
+            password
+
+          })
+        }
+      );
+
+    if(!data.success){
+
+      throw new Error(
+        data.error ||
+        "Authentication failed."
+      );
+
+    }
+
+    me =
+      data.user ||
+      null;
+
+    session =
+      data.session ||
+      null;
+
+    if(me){
+
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
+
+    }
+
+    if(session){
+
+      localStorage.setItem(
+        "session",
+        JSON.stringify(session)
+      );
+
+    }
+
+    updateHeader();
+
+    renderBuyer();
+
+    status(
+      "buyerStatus",
+      data.message ||
+      "Login successful.",
+      "success"
+    );
+
+  }catch(error){
+
+    status(
+      "buyerStatus",
+      error.message
+    );
+
+  }finally{
+
+    if(button){
+      button.disabled = false;
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   BUYER DASHBOARD
+========================================================= */
+
+function renderBuyer(){
+
+  const login =
+    $("buyerLoginPanel");
+
+  const dashboard =
+    $("buyerDashboard");
+
+  if(!login || !dashboard){
+    return;
+  }
+
+  if(!me || me.role !== "buyer"){
+
+    login.classList.remove("hidden");
+    dashboard.classList.add("hidden");
+
+    return;
+
+  }
+
+  login.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+
+  $("buyerWelcome").textContent =
+    "Welcome, " +
+    (
+      me.name ||
+      me.full_name ||
+      me.phone ||
+      "Buyer"
+    ) +
+    ".";
+
+  loadBuyerDashboard();
+
+}
+
+
+async function loadBuyerDashboard(){
+
+  try{
+
+    const data =
+      await api(
+        "buyer",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            action:"dashboard"
+          })
+        }
+      );
+
+    const summary =
+      data.summary ||
+      data.stats ||
+      {};
+
+    $("buyerTotalOrders").textContent =
+      summary.total_orders || 0;
+
+    $("buyerPendingOrders").textContent =
+      summary.pending_orders || 0;
+
+    $("buyerCompletedOrders").textContent =
+      summary.completed_orders || 0;
+
+    $("buyerTotalSpent").textContent =
+      money(summary.total_spent);
+
+    renderBuyerOrders(
+      data.orders || []
+    );
+
+    renderBuyerTransactions(
+      data.transactions || []
+    );
+
+    renderBuyerProfile(
+      data.profile ||
+      me
+    );
+
+    renderConversations(
+      "buyer",
+      data.conversations || []
+    );
+
+  }catch(error){
+
+    console.error(
+      "BUYER DASHBOARD:",
+      error
+    );
+
+  }
+
+}
+
+
+function buyerTab(tab){
+
+  const tabs = [
+    "orders",
+    "transactions",
+    "payments",
+    "chat",
+    "profile"
+  ];
+
+  tabs.forEach(name => {
+
+    const el =
+      $("buyer" +
+        name.charAt(0).toUpperCase() +
+        name.slice(1) +
+        "Tab"
+      );
+
+    if(el){
+      el.classList.add("hidden");
+    }
+
+  });
+
+  const target =
+    $("buyer" +
+      tab.charAt(0).toUpperCase() +
+      tab.slice(1) +
+      "Tab"
+    );
+
+  if(target){
+    target.classList.remove("hidden");
+  }
+
+}
+
+
+function renderBuyerOrders(orders){
+
+  const box =
+    $("buyerOrders");
+
+  if(!box){
+    return;
+  }
+
+  if(!orders.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No orders have been recorded.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    orders.map(order => `
+
+      <div class="record">
+
+        <div class="record-title">
+          Order #${esc(order.id)}
+        </div>
+
+        <div class="muted">
+          ${esc(
+            order.created_at ||
+            ""
+          )}
+        </div>
+
+        <div class="record-money">
+          ${money(
+            order.total_amount ||
+            order.amount
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            order.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderBuyerTransactions(transactions){
+
+  const box =
+    $("buyerTransactions");
+
+  if(!box){
+    return;
+  }
+
+  if(!transactions.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No transaction records have been returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    transactions.map(tx => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            tx.reference ||
+            tx.id ||
+            "Transaction"
+          )}
+        </div>
+
+        <div>
+          Payment method:
+          ${esc(
+            tx.payment_method ||
+            tx.method ||
+            "NGN"
+          )}
+        </div>
+
+        <div class="record-money">
+          ${money(tx.amount)}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            tx.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderBuyerProfile(profile){
+
+  const box =
+    $("buyerProfile");
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML = `
+
+    <div class="record-line">
+      <span>Name</span>
+      <strong>
+        ${esc(
+          profile.name ||
+          profile.full_name ||
+          ""
+        )}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Phone</span>
+      <strong>
+        ${esc(profile.phone || "")}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Email</span>
+      <strong>
+        ${esc(profile.email || "")}
+      </strong>
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+async function startPayment(){
+
+  const amount =
+    Number(
+      $("buyerPaymentAmount").value
+    );
+
+  const method =
+    $("buyerPaymentMethod").value;
+
+  if(!amount || amount <= 0){
+
+    status(
+      "buyerPaymentMessage",
+      "Enter a valid NGN amount."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    status(
+      "buyerPaymentMessage",
+      "Creating secure payment...",
+      "success"
+    );
+
+    const data =
+      await api(
+        "payments",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"initialize",
+
+            amount,
+
+            currency:"NGN",
+
+            payment_method:method
+
+          })
+        }
+      );
+
+    if(data.authorization_url){
+
+      window.location.href =
+        data.authorization_url;
+
+      return;
+
+    }
+
+    if(data.payment_url){
+
+      window.location.href =
+        data.payment_url;
+
+      return;
+
+    }
+
+    status(
+      "buyerPaymentMessage",
+      data.message ||
+      "Payment request was created.",
+      "success"
+    );
+
+  }catch(error){
+
+    status(
+      "buyerPaymentMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   BUY PRODUCT
+========================================================= */
+
+async function buyProduct(productId){
+
+  if(!me || me.role !== "buyer"){
+
+    alert(
+      "Please log in with a buyer account before purchasing."
+    );
+
+    show("account");
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "orders",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"create",
+
+            product_id:productId
+
+          })
+        }
+      );
+
+    if(data.payment_url){
+
+      window.location.href =
+        data.payment_url;
+
+      return;
+
+    }
+
+    if(data.authorization_url){
+
+      window.location.href =
+        data.authorization_url;
+
+      return;
+
+    }
+
+    alert(
+      data.message ||
+      "Order created. Continue through the payment page."
+    );
+
+  }catch(error){
+
+    alert(error.message);
+
+  }
+
+}
+
+
+/* =========================================================
+   BUSINESS REGISTRATION
+========================================================= */
+
+async function sellerRegister(){
+
+  const businessName =
+    $("sname").value.trim();
+
+  const phone =
+    $("sphone").value.trim();
+
+  const email =
+    $("semail").value.trim();
+
+  const password =
+    $("spass").value;
+
+  const bankName =
+    $("sbank").value.trim();
+
+  const bankCode =
+    $("sbankcode").value.trim();
+
+  const accountNumber =
+    $("sacct").value.trim();
+
+  if(
+    !businessName ||
+    !phone ||
+    !password
+  ){
+
+    status(
+      "sellerStatus",
+      "Business name, phone number and password are required."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+
+            action:"register",
+
+            role:"seller",
+
+            businessName,
+
+            phone,
+
+            email,
+
+            password,
+
+            bankName,
+
+            bankCode,
+
+            accountNumber
+
+          })
+        }
+      );
+
+    if(!data.success){
+
+      throw new Error(
+        data.error ||
+        "Business account could not be created."
+      );
+
+    }
+
+    me =
+      data.user ||
+      null;
+
+    session =
+      data.session ||
+      null;
+
+    if(me){
+
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
+
+    }
+
+    if(session){
+
+      localStorage.setItem(
+        "session",
+        JSON.stringify(session)
+      );
+
+    }
+
+    updateHeader();
+
+    renderSeller();
+
+    status(
+      "sellerStatus",
+      data.message ||
+      "Business account created successfully.",
+      "success"
+    );
+
+  }catch(error){
+
+    status(
+      "sellerStatus",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   BUSINESS LOGIN
+========================================================= */
+
+async function sellerLogin(){
+
+  const phone =
+    $("sphone").value.trim();
+
+  const password =
+    $("spass").value;
+
+  if(!phone || !password){
+
+    status(
+      "sellerStatus",
+      "Phone number and password are required."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "auth",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+
+            action:"login",
+
+            role:"seller",
+
+            phone,
+
+            password
+
+          })
+        }
+      );
+
+    if(!data.success){
+
+      throw new Error(
+        data.error ||
+        "Business login failed."
+      );
+
+    }
+
+    me =
+      data.user ||
+      null;
+
+    session =
+      data.session ||
+      null;
+
+    if(me){
+
+      localStorage.setItem(
+        "me",
+        JSON.stringify(me)
+      );
+
+    }
+
+    if(session){
+
+      localStorage.setItem(
+        "session",
+        JSON.stringify(session)
+      );
+
+    }
+
+    updateHeader();
+
+    renderSeller();
+
+    status(
+      "sellerStatus",
+      data.message ||
+      "Business login successful.",
+      "success"
+    );
+
+  }catch(error){
+
+    status(
+      "sellerStatus",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SELLER DASHBOARD
+========================================================= */
+
+function renderSeller(){
+
+  const login =
+    $("sellerLoginPanel");
+
+  const dashboard =
+    $("sellerDashboard");
+
+  if(!login || !dashboard){
+    return;
+  }
+
+  if(
+    !me ||
+    !(
+      me.role === "seller" ||
+      me.role === "business"
+    )
+  ){
+
+    login.classList.remove("hidden");
+    dashboard.classList.add("hidden");
+
+    return;
+
+  }
+
+  login.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+
+  $("sellerWelcome").textContent =
+    "Welcome, " +
+    (
+      me.business_name ||
+      me.businessName ||
+      me.name ||
+      "Business Owner"
+    ) +
+    ".";
+
+  loadSellerDashboard();
+
+}
+
+
+async function loadSellerDashboard(){
+
+  try{
+
+    const data =
+      await api(
+        "seller",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            action:"dashboard"
+          })
+        }
+      );
+
+    const stats =
+      data.summary ||
+      data.stats ||
+      {};
+
+    $("sellerBalance").textContent =
+      money(
+        stats.available_balance
+      );
+
+    $("sellerPendingBalance").textContent =
+      money(
+        stats.pending_balance
+      );
+
+    $("sellerTotalSales").textContent =
+      money(
+        stats.total_sales
+      );
+
+    $("sellerMarketplaceCommission").textContent =
+      money(
+        stats.marketplace_commission
+      );
+
+    $("sellerPromotionCommission").textContent =
+      money(
+        stats.promotion_commission
+      );
+
+    $("sellerOrderCount").textContent =
+      stats.total_orders || 0;
+
+    $("sellerProductCount").textContent =
+      stats.total_products || 0;
+
+    renderSellerOverview(stats);
+
+    renderSellerOrders(
+      data.orders || []
+    );
+
+    renderSellerTransactions(
+      data.transactions || []
+    );
+
+    renderSellerProducts(
+      data.products || []
+    );
+
+    renderSellerPromotions(
+      data.products || []
+    );
+
+    renderSellerWithdrawalInfo(
+      stats
+    );
+
+    renderConversations(
+      "seller",
+      data.conversations || []
+    );
+
+  }catch(error){
+
+    console.error(
+      "SELLER DASHBOARD:",
+      error
+    );
+
+  }
+
+}
+
+
+function sellerTab(tab){
+
+  const names = [
+    "overview",
+    "orders",
+    "transactions",
+    "products",
+    "promotions",
+    "withdraw",
+    "chat"
+  ];
+
+  names.forEach(name => {
+
+    const el =
+      $("seller" +
+        name.charAt(0).toUpperCase() +
+        name.slice(1) +
+        "Tab"
+      );
+
+    if(el){
+      el.classList.add("hidden");
+    }
+
+  });
+
+  const target =
+    $("seller" +
+      tab.charAt(0).toUpperCase() +
+      tab.slice(1) +
+      "Tab"
+    );
+
+  if(target){
+    target.classList.remove("hidden");
+  }
+
+}
+
+
+function renderSellerOverview(stats){
+
+  $("sellerOverview").innerHTML = `
+
+    <div class="record-line">
+      <span>Available balance</span>
+      <strong>
+        ${money(stats.available_balance)}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Pending balance</span>
+      <strong>
+        ${money(stats.pending_balance)}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Total sales</span>
+      <strong>
+        ${money(stats.total_sales)}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>5% marketplace commission</span>
+      <strong>
+        ${money(stats.marketplace_commission)}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Promotion spending</span>
+      <strong>
+        ${money(stats.promotion_spending)}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>3% promotion commission</span>
+      <strong>
+        ${money(stats.promotion_commission)}
+      </strong>
+    </div>
+
+  `;
+
+}
+
+
+function renderSellerOrders(orders){
+
+  const box =
+    $("sellerOrders");
+
+  if(!box){
+    return;
+  }
+
+  if(!orders.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No orders have been recorded.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    orders.map(order => `
+
+      <div class="record">
+
+        <div class="record-title">
+          Order #${esc(order.id)}
+        </div>
+
+        <div>
+          Buyer:
+          ${esc(
+            order.buyer_name ||
+            order.buyer_phone ||
+            ""
+          )}
+        </div>
+
+        <div class="record-money">
+          ${money(
+            order.total_amount ||
+            order.amount
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            order.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderSellerTransactions(transactions){
+
+  const box =
+    $("sellerTransactions");
+
+  if(!box){
+    return;
+  }
+
+  if(!transactions.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No financial transactions have been recorded.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    transactions.map(tx => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            tx.reference ||
+            tx.id
+          )}
+        </div>
+
+        <div>
+          Gross:
+          ${money(
+            tx.gross_amount ||
+            tx.amount
+          )}
+        </div>
+
+        <div>
+          Marketplace commission (5%):
+          ${money(
+            tx.marketplace_commission
+          )}
+        </div>
+
+        <div>
+          Promotion commission (3%):
+          ${money(
+            tx.promotion_commission
+          )}
+        </div>
+
+        <div>
+          Net seller amount:
+          ${money(
+            tx.net_amount
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            tx.status ||
+            "Recorded"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderSellerProducts(products){
+
+  const box =
+    $("sellerProducts");
+
+  if(!box){
+    return;
+  }
+
+  if(!products.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No products have been uploaded.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    products.map(product => {
+
+      const image =
+        product.image_url ||
+        product.image ||
+        product.imageUrl ||
+        "";
+
+      return `
+
+      <div class="record">
+
+        ${
+          image
+            ? `
+              <img
+                src="${esc(image)}"
+                alt="${esc(product.name || "Product")}"
+                style="
+                  width:100%;
+                  max-width:180px;
+                  height:120px;
+                  object-fit:cover;
+                  border-radius:9px;
+                  margin-bottom:8px">
+            `
+            : ""
+        }
+
+        <div class="record-title">
+          ${esc(product.name)}
+        </div>
+
+        <div>
+          Price:
+          ${money(product.price)}
+        </div>
+
+        <div>
+          Stock:
+          ${esc(
+            product.stock ??
+            product.quantity ??
+            ""
+          )}
+        </div>
+
+        <span class="tag">
+          Active
+        </span>
+
+      </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+function renderSellerPromotions(products){
+
+  const box =
+    $("sellerPromotionProducts");
+
+  if(!box){
+    return;
+  }
+
+  if(!products.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        Upload a product before promoting it.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    products.map(product => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(product.name)}
+        </div>
+
+        <div class="muted">
+          Promote this product through SALGA.
+        </div>
+
+        <button
+          class="btn"
+          onclick="requestPromotion('${esc(product.id)}')">
+          Request promotion
+        </button>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+async function requestPromotion(productId){
+
+  try{
+
+    const data =
+      await api(
+        "promotions",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"create",
+
+            product_id:productId
+
+          })
+        }
+      );
+
+    alert(
+      data.message ||
+      "Promotion request created."
+    );
+
+    loadSellerDashboard();
+
+  }catch(error){
+
+    alert(error.message);
+
+  }
+
+}
+
+
+/* =========================================================
+   PRODUCT IMAGE PREVIEW
+========================================================= */
+
+function previewProductImage(){
+
+  const file =
+    $("productImageFile")?.files?.[0];
+
+  const preview =
+    $("productImagePreview");
+
+  if(!preview){
+    return;
+  }
+
+  if(!file){
+
+    preview.classList.add("hidden");
+    preview.removeAttribute("src");
+
+    return;
+
+  }
+
+  if(!file.type.startsWith("image/")){
+
+    alert(
+      "Please select an image file."
+    );
+
+    $("productImageFile").value = "";
+    preview.classList.add("hidden");
+
+    return;
+
+  }
+
+  const maxSize =
+    5 * 1024 * 1024;
+
+  if(file.size > maxSize){
+
+    alert(
+      "The image is too large. Please select an image smaller than 5 MB."
+    );
+
+    $("productImageFile").value = "";
+    preview.classList.add("hidden");
+
+    return;
+
+  }
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(event){
+
+      preview.src =
+        event.target.result;
+
+      preview.classList.remove("hidden");
+
+    };
+
+  reader.readAsDataURL(file);
+
+}
+
+
+function clearProductFileIfUrlUsed(){
+
+  const url =
+    $("productImage")?.value.trim();
+
+  if(
+    url &&
+    $("productImageFile")
+  ){
+
+    $("productImageFile").value = "";
+
+    if($("productImagePreview")){
+
+      $("productImagePreview")
+        .classList.add("hidden");
+
+      $("productImagePreview")
+        .removeAttribute("src");
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   PRODUCT UPLOAD
+========================================================= */
+
+async function uploadProduct(){
+
+  const name =
+    $("productName").value.trim();
+
+  const price =
+    Number(
+      $("productPrice").value
+    );
+
+  const category =
+    $("productCategory").value;
+
+  const description =
+    $("productDescription").value.trim();
+
+  const imageUrl =
+    $("productImage").value.trim();
+
+  const imageFile =
+    $("productImageFile")?.files?.[0] ||
+    null;
+
+  if(!me){
+
+    status(
+      "productUploadStatus",
+      "Please log in as a business owner before uploading a product."
+    );
+
+    return;
+
+  }
+
+  if(
+    me.role !== "seller" &&
+    me.role !== "business"
+  ){
+
+    status(
+      "productUploadStatus",
+      "Only business owners can upload products."
+    );
+
+    return;
+
+  }
+
+  if(!name){
+
+    status(
+      "productUploadStatus",
+      "Product name is required."
+    );
+
+    return;
+
+  }
+
+  if(!price || price <= 0){
+
+    status(
+      "productUploadStatus",
+      "Enter a valid product price."
+    );
+
+    return;
+
+  }
+
+  if(!imageFile && !imageUrl){
+
+    status(
+      "productUploadStatus",
+      "Please upload a product image or provide an image URL."
+    );
+
+    return;
+
+  }
+
+  if(imageFile){
+
+    if(!imageFile.type.startsWith("image/")){
+
+      status(
+        "productUploadStatus",
+        "The selected file is not a valid image."
+      );
+
+      return;
+
+    }
+
+    if(imageFile.size > 5 * 1024 * 1024){
+
+      status(
+        "productUploadStatus",
+        "The product image must be 5 MB or smaller."
+      );
+
+      return;
+
+    }
+
+  }
+
+  const button =
+    $("uploadProductBtn");
+
+  if(button){
+    button.disabled = true;
+    button.textContent =
+      imageFile
+        ? "Uploading image and product..."
+        : "Uploading product...";
+  }
+
+  status(
+    "productUploadStatus",
+    imageFile
+      ? "Uploading the product image to secure storage..."
+      : "Saving product...",
+    "success"
+  );
+
+  try{
+
+    let data;
+
+    /*
+     * When a file is selected we use multipart/form-data.
+     * The /api/products backend is responsible for putting
+     * the image into Supabase Storage and saving the public
+     * image URL with the product.
+     */
+
+    if(imageFile){
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "action",
+        "create"
+      );
+
+      formData.append(
+        "name",
+        name
+      );
+
+      formData.append(
+        "price",
+        String(price)
+      );
+
+      formData.append(
+        "category",
+        category
+      );
+
+      formData.append(
+        "description",
+        description
+      );
+
+      formData.append(
+        "image",
+        imageFile,
+        imageFile.name
+      );
+
+      data =
+        await api(
+          "products",
+          {
+            method:"POST",
+            body:formData
+          }
+        );
+
+    }else{
+
+      data =
+        await api(
+          "products",
+          {
+            method:"POST",
+            body:JSON.stringify({
+
+              action:"create",
+
+              name,
+
+              price,
+
+              category,
+
+              description,
+
+              image_url:imageUrl
+
+            })
+          }
+        );
+
+    }
+
+    if(data.success === false){
+
+      throw new Error(
+        data.error ||
+        "Product upload failed."
+      );
+
+    }
+
+    status(
+      "productUploadStatus",
+      data.message ||
+      "Product uploaded successfully and is now available in the marketplace.",
+      "success"
+    );
+
+    $("productName").value = "";
+    $("productPrice").value = "";
+    $("productDescription").value = "";
+    $("productImage").value = "";
+
+    if($("productImageFile")){
+      $("productImageFile").value = "";
+    }
+
+    if($("productImagePreview")){
+
+      $("productImagePreview")
+        .classList.add("hidden");
+
+      $("productImagePreview")
+        .removeAttribute("src");
+
+    }
+
+    /*
+     * Reload immediately so the seller sees the new product
+     * and the Shop receives the new product without waiting.
+     */
+
+    await loadSellerDashboard();
+
+    await loadProducts();
+
+  }catch(error){
+
+    status(
+      "productUploadStatus",
+      error.message ||
+      "Product upload failed."
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "Upload Product";
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   SELLER WITHDRAWAL
+========================================================= */
+
+function renderSellerWithdrawalInfo(stats){
+
+  const box =
+    $("sellerWithdrawalInfo");
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML = `
+
+    <div class="record-line">
+      <span>Available balance</span>
+      <strong>
+        ${money(
+          stats.available_balance
+        )}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Bank</span>
+      <strong>
+        ${esc(
+          stats.bank_name ||
+          me.bank_name ||
+          ""
+        )}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Account number</span>
+      <strong>
+        ${esc(
+          stats.account_number ||
+          me.account_number ||
+          ""
+        )}
+      </strong>
+    </div>
+
+  `;
+
+}
+
+
+async function sellerWithdrawal(){
+
+  const amount =
+    Number(
+      $("sellerWithdrawAmount").value
+    );
+
+  if(!amount || amount <= 0){
+
+    status(
+      "sellerWithdrawMessage",
+      "Enter a valid withdrawal amount."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "withdrawals",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"seller_request",
+
+            amount
+
+          })
+        }
+      );
+
+    status(
+      "sellerWithdrawMessage",
+      data.message ||
+      "Withdrawal request submitted.",
+      "success"
+    );
+
+    $("sellerWithdrawAmount").value = "";
+
+    loadSellerDashboard();
+
+  }catch(error){
+
+    status(
+      "sellerWithdrawMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ADMIN LOGIN
+========================================================= */
+
+async function adminLogin(){
+
+  const email =
+    $("apassEmail").value.trim();
+
+  const password =
+    $("apass").value;
+
+  if(!email || !password){
+
+    status(
+      "adminMsg",
+      "Admin email and password are required."
+    );
+
+    return;
+
+  }
+
+  status(
+    "adminMsg",
+    "Logging in...",
+    "success"
+  );
+
+  try{
+
+    const data =
+      await api(
+        "admin",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+
+            action:"login",
+
+            email,
+
+            password
+
+          })
+        }
+      );
+
+    if(!data.token){
+
+      throw new Error(
+        data.error ||
+        "Admin login did not return a secure token."
+      );
+
+    }
+
+    localStorage.setItem(
+      "adminToken",
+      data.token
+    );
+
+    status(
+      "adminMsg",
+      data.message ||
+      "Admin login successful.",
+      "success"
+    );
+
+    renderAdmin();
+
+  }catch(error){
+
+    status(
+      "adminMsg",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ADMIN DASHBOARD
+========================================================= */
+
+function renderAdmin(){
+
+  const login =
+    $("adminLoginPanel");
+
+  const dashboard =
+    $("adminDashboard");
+
+  if(!login || !dashboard){
+    return;
+  }
+
+  if(!localStorage.getItem("adminToken")){
+
+    login.classList.remove("hidden");
+    dashboard.classList.add("hidden");
+
+    return;
+
+  }
+
+  login.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+
+  loadAdminDashboard();
+
+}
+
+
+async function loadAdminDashboard(){
+
+  try{
+
+    const data =
+      await api(
+        "admin",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"dashboard"
+
+          })
+        }
+      );
+
+    const stats =
+      data.stats ||
+      data.summary ||
+      {};
+
+    $("adminBuyers").textContent =
+      stats.total_buyers ??
+      stats.buyers ??
+      0;
+
+    $("adminBusinesses").textContent =
+      stats.total_businesses ??
+      stats.businesses ??
+      0;
+
+    $("adminProducts").textContent =
+      stats.total_products ??
+      stats.products ??
+      0;
+
+    $("adminOrders").textContent =
+      stats.total_orders ??
+      stats.orders ??
+      0;
+
+    $("adminTransactionVolume").textContent =
+      money(
+        stats.transaction_volume ??
+        stats.total_transaction_volume
+      );
+
+    $("adminFivePercent").textContent =
+      money(
+        stats.marketplace_commission
+      );
+
+    $("adminThreePercent").textContent =
+      money(
+        stats.promotion_commission
+      );
+
+    $("adminTotalCommission").textContent =
+      money(
+        Number(
+          stats.marketplace_commission || 0
+        ) +
+        Number(
+          stats.promotion_commission || 0
+        )
+      );
+
+    $("commission5Display").textContent =
+      money(
+        stats.marketplace_commission
+      );
+
+    $("commission3Display").textContent =
+      money(
+        stats.promotion_commission
+      );
+
+    $("commissionTotalDisplay").textContent =
+      money(
+        Number(
+          stats.marketplace_commission || 0
+        ) +
+        Number(
+          stats.promotion_commission || 0
+        )
+      );
+
+    renderAdminOverview(stats);
+
+    renderAdminUsers(
+      data.users || []
+    );
+
+    renderAdminBusinesses(
+      data.businesses || []
+    );
+
+    renderAdminOrders(
+      data.orders || []
+    );
+
+    renderAdminTransactions(
+      data.transactions || []
+    );
+
+    renderAdminCommissions(
+      data.commissions || []
+    );
+
+    renderAdminPromotions(
+      data.promotions || []
+    );
+
+    renderAdminWithdrawals(
+      data.withdrawals || []
+    );
+
+    renderConversations(
+      "admin",
+      data.conversations || []
+    );
+
+  }catch(error){
+
+    console.error(
+      "ADMIN DASHBOARD ERROR:",
+      error
+    );
+
+    status(
+      "adminMsg",
+      error.message
+    );
+
+  }
+
+}
+
+
+function adminTab(tab){
+
+  const names = [
+    "overview",
+    "users",
+    "businesses",
+    "orders",
+    "transactions",
+    "commissions",
+    "promotions",
+    "withdrawals",
+    "chat"
+  ];
+
+  names.forEach(name => {
+
+    const el =
+      $("admin" +
+        name.charAt(0).toUpperCase() +
+        name.slice(1) +
+        "Tab"
+      );
+
+    if(el){
+      el.classList.add("hidden");
+    }
+
+  });
+
+  const target =
+    $("admin" +
+      tab.charAt(0).toUpperCase() +
+      tab.slice(1) +
+      "Tab"
+    );
+
+  if(target){
+    target.classList.remove("hidden");
+  }
+
+}
+
+
+function renderAdminOverview(stats){
+
+  $("adminOverview").innerHTML = `
+
+    <div class="record-line">
+      <span>Registered buyers</span>
+      <strong>
+        ${stats.total_buyers ||
+          stats.buyers ||
+          0}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Business owners</span>
+      <strong>
+        ${stats.total_businesses ||
+          stats.businesses ||
+          0}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Total products</span>
+      <strong>
+        ${stats.total_products ||
+          stats.products ||
+          0}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Total orders</span>
+      <strong>
+        ${stats.total_orders ||
+          stats.orders ||
+          0}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>Total transaction volume</span>
+      <strong>
+        ${money(
+          stats.transaction_volume
+        )}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>5% marketplace commission</span>
+      <strong>
+        ${money(
+          stats.marketplace_commission
+        )}
+      </strong>
+    </div>
+
+    <div class="record-line">
+      <span>3% promotion/ads commission</span>
+      <strong>
+        ${money(
+          stats.promotion_commission
+        )}
+      </strong>
+    </div>
+
+  `;
+
+}
+
+
+function renderAdminUsers(users){
+
+  const box =
+    $("adminUsers");
+
+  if(!box){
+    return;
+  }
+
+  if(!users.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No user records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    users.map(user => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            user.name ||
+            user.full_name ||
+            "User"
+          )}
+        </div>
+
+        <div>
+          Phone:
+          ${esc(
+            user.phone ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Email:
+          ${esc(
+            user.email ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Account:
+          ${esc(
+            user.role ||
+            user.account_type ||
+            ""
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            user.status ||
+            "Active"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminBusinesses(businesses){
+
+  const box =
+    $("adminBusinessList");
+
+  if(!box){
+    return;
+  }
+
+  if(!businesses.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No business records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    businesses.map(business => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            business.business_name ||
+            business.name ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Owner:
+          ${esc(
+            business.owner_name ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Phone:
+          ${esc(
+            business.phone ||
+            business.owner_phone ||
+            ""
+          )}
+        </div>
+
+        <div class="record-money">
+          Balance:
+          ${money(
+            business.balance
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            business.status ||
+            "Active"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminOrders(orders){
+
+  const box =
+    $("adminOrderList");
+
+  if(!box){
+    return;
+  }
+
+  if(!orders.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No order records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    orders.map(order => `
+
+      <div class="record">
+
+        <div class="record-title">
+          Order #${esc(order.id)}
+        </div>
+
+        <div>
+          Buyer:
+          ${esc(
+            order.buyer_name ||
+            order.buyer_phone ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Business:
+          ${esc(
+            order.business_name ||
+            ""
+          )}
+        </div>
+
+        <div class="record-money">
+          ${money(
+            order.total_amount ||
+            order.amount
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            order.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminTransactions(transactions){
+
+  const box =
+    $("adminTransactionList");
+
+  if(!box){
+    return;
+  }
+
+  if(!transactions.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No transaction records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    transactions.map(tx => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            tx.reference ||
+            tx.id
+          )}
+        </div>
+
+        <div>
+          Gross amount:
+          ${money(
+            tx.gross_amount ||
+            tx.amount
+          )}
+        </div>
+
+        <div>
+          Marketplace commission 5%:
+          ${money(
+            tx.marketplace_commission
+          )}
+        </div>
+
+        <div>
+          Promotion commission 3%:
+          ${money(
+            tx.promotion_commission
+          )}
+        </div>
+
+        <div>
+          Seller/buyer net:
+          ${money(
+            tx.net_amount
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            tx.status ||
+            "Recorded"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminCommissions(commissions){
+
+  const box =
+    $("adminCommissionList");
+
+  if(!box){
+    return;
+  }
+
+  if(!commissions.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No commission records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    commissions.map(item => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            item.reference ||
+            item.id
+          )}
+        </div>
+
+        <div>
+          Commission type:
+          ${esc(
+            item.type ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Commission rate:
+          ${item.type === "promotion"
+            ? "3%"
+            : "5%"}
+        </div>
+
+        <div class="record-money">
+          ${money(item.amount)}
+        </div>
+
+        <div class="muted">
+          ${esc(
+            item.created_at ||
+            ""
+          )}
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminPromotions(promotions){
+
+  const box =
+    $("adminPromotionList");
+
+  if(!box){
+    return;
+  }
+
+  if(!promotions.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No promotion records were returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    promotions.map(item => `
+
+      <div class="record">
+
+        <div class="record-title">
+          ${esc(
+            item.product_name ||
+            "Promotion"
+          )}
+        </div>
+
+        <div>
+          Business:
+          ${esc(
+            item.business_name ||
+            ""
+          )}
+        </div>
+
+        <div>
+          Promotion amount:
+          ${money(item.amount)}
+        </div>
+
+        <div>
+          3% platform commission:
+          ${money(
+            item.commission
+          )}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            item.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function renderAdminWithdrawals(withdrawals){
+
+  const box =
+    $("adminWithdrawalInfo");
+
+  if(!box){
+    return;
+  }
+
+  if(!withdrawals.length){
+
+    box.innerHTML =
+      `<div class="notice">
+        No commission withdrawal records have been returned.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    withdrawals.map(item => `
+
+      <div class="record">
+
+        <div class="record-title">
+          Withdrawal #${esc(item.id)}
+        </div>
+
+        <div>
+          Amount:
+          ${money(item.amount)}
+        </div>
+
+        <div>
+          Bank:
+          ${esc(item.bank_name || "")}
+        </div>
+
+        <div>
+          Account:
+          ${esc(item.account_number || "")}
+        </div>
+
+        <span class="tag">
+          ${esc(
+            item.status ||
+            "Pending"
+          )}
+        </span>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* =========================================================
+   ADMIN WITHDRAWAL
+========================================================= */
+
+async function adminWithdrawal(){
+
+  const amount =
+    Number(
+      $("adminWithdrawAmount").value
+    );
+
+  if(!amount || amount <= 500000){
+
+    status(
+      "adminWithdrawMessage",
+      "Admin commission withdrawal is only available above ₦500,000."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "withdrawals",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"admin_request",
+
+            amount,
+
+            bank_name:
+              $("adminWithdrawBank").value.trim(),
+
+            bank_code:
+              $("adminWithdrawBankCode").value.trim(),
+
+            account_number:
+              $("adminWithdrawAccount").value.trim()
+
+          })
+        }
+      );
+
+    status(
+      "adminWithdrawMessage",
+      data.message ||
+      "Withdrawal request submitted.",
+      "success"
+    );
+
+    loadAdminDashboard();
+
+  }catch(error){
+
+    status(
+      "adminWithdrawMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function renderConversations(role,list){
+
+  let box;
+
+  if(role === "buyer"){
+    box = $("buyerConversations");
+  }
+
+  if(role === "seller"){
+    box = $("sellerConversations");
+  }
+
+  if(role === "admin"){
+    box = $("adminConversations");
+  }
+
+  if(!box){
+    return;
+  }
+
+  if(!list.length){
+
+    box.innerHTML =
+      `<div class="muted">
+        No conversations yet.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    list.map(conversation => `
+
+      <div
+        class="conversation"
+        onclick="openConversation(
+          '${esc(role)}',
+          '${esc(conversation.id)}'
+        )">
+
+        ${esc(
+          conversation.name ||
+          conversation.business_name ||
+          conversation.title ||
+          "Conversation"
+        )}
+
+      </div>
+
+    `).join("");
+
+}
+
+
+async function openConversation(role,id){
+
+  if(role === "buyer"){
+    activeBuyerConversation = id;
+  }
+
+  if(role === "seller"){
+    activeSellerConversation = id;
+  }
+
+  if(role === "admin"){
+    activeAdminConversation = id;
+  }
+
+  let box;
+
+  if(role === "buyer"){
+    box = $("buyerChatMessages");
+  }
+
+  if(role === "seller"){
+    box = $("sellerChatMessages");
+  }
+
+  if(role === "admin"){
+    box = $("adminChatMessages");
+  }
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML =
+    "Loading messages...";
+
+  try{
+
+    const data =
+      await api(
+        "chat",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"messages",
+
+            conversation_id:id
+
+          })
+        }
+      );
+
+    renderMessages(
+      box,
+      data.messages || []
+    );
+
+  }catch(error){
+
+    box.innerHTML =
+      `<div class="notice error">
+        ${esc(error.message)}
+      </div>`;
+
+  }
+
+}
+
+
+function renderMessages(box,messages){
+
+  if(!messages.length){
+
+    box.innerHTML =
+      `<div class="muted">
+        No messages yet.
+      </div>`;
+
+    return;
+
+  }
+
+  box.innerHTML =
+    messages.map(message => {
+
+      const mine =
+        message.sender_id &&
+        me?.id &&
+        message.sender_id === me.id;
+
+      const isAI =
+        message.sender_type === "ai" ||
+        message.role === "assistant" ||
+        message.is_ai === true;
+
+      return `
+
+        <div class="chat-message
+          ${mine ? "mine" : ""}
+          ${isAI ? "ai" : ""}">
+
+          <strong>
+            ${esc(
+              message.sender_name ||
+              (
+                isAI
+                  ? "SALGA AI Customer Care"
+                  : mine
+                    ? "You"
+                    : "User"
+              )
+            )}
+          </strong>
+
+          <div>
+            ${esc(
+              message.message ||
+              message.content ||
+              ""
+            )}
+          </div>
+
+          <span class="time">
+            ${esc(
+              message.created_at ||
+              ""
+            )}
+          </span>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+  box.scrollTop =
+    box.scrollHeight;
+
+}
+
+
+async function sendChatMessage(
+  conversationId,
+  inputId
+){
+
+  const input =
+    $(inputId);
+
+  const text =
+    input?.value.trim();
+
+  if(!conversationId){
+
+    alert(
+      "Please select a conversation first."
+    );
+
+    return;
+
+  }
+
+  if(!text){
+    return;
+  }
+
+  try{
+
+    await api(
+      "chat",
+      {
+        method:"POST",
+        body:JSON.stringify({
+
+          action:"send",
+
+          conversation_id:
+            conversationId,
+
+          message:text
+
+        })
+      }
+    );
+
+    input.value = "";
+
+    await openConversation(
+      me?.role === "buyer"
+        ? "buyer"
+        : me?.role === "seller"
+          ? "seller"
+          : "admin",
+      conversationId
+    );
+
+  }catch(error){
+
+    alert(error.message);
+
+  }
+
+}
+
+
+function sendBuyerMessage(){
+
+  sendChatMessage(
+    activeBuyerConversation,
+    "buyerChatInput"
+  );
+
+}
+
+
+function sendSellerMessage(){
+
+  sendChatMessage(
+    activeSellerConversation,
+    "sellerChatInput"
+  );
+
+}
+
+
+function sendAdminMessage(){
+
+  sendChatMessage(
+    activeAdminConversation,
+    "adminChatInput"
+  );
+
+}
+
+
+/* =========================================================
+   AI CUSTOMER CARE
+========================================================= */
+
+async function askAICustomerCare(){
+
+  const input =
+    $("aiCareInput");
+
+  const output =
+    $("aiCareResponse");
+
+  const button =
+    $("aiCareButton");
+
+  const question =
+    input?.value.trim();
+
+  if(!question){
+
+    status(
+      "aiCareResponse",
+      "Please type your question first."
+    );
+
+    return;
+
+  }
+
+  if(button){
+
+    button.disabled = true;
+
+    button.textContent =
+      "Customer Care is thinking...";
+
+  }
+
+  status(
+    "aiCareResponse",
+    "Connecting to SALGA Customer Care...",
+    "success"
+  );
+
+  try{
+
+    /*
+     * The backend handles the AI provider and keeps
+     * private AI credentials away from the browser.
+     */
+
+    const data =
+      await api(
+        "chat",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"customer_care_ai",
+
+            message:question,
+
+            context:{
+              platform:"SALGA Digital Mart",
+              role:me?.role || "guest",
+              user_id:me?.id || null
+            }
+
+          })
+        }
+      );
+
+    const answer =
+      data.answer ||
+      data.response ||
+      data.message ||
+      data.reply;
+
+    if(!answer){
+
+      throw new Error(
+        "Customer Care did not return an answer."
+      );
+
+    }
+
+    output.innerHTML =
+      `<div class="chat-message ai">
+
+        <strong>
+          SALGA AI Customer Care
+        </strong>
+
+        <div>
+          ${esc(answer)}
+        </div>
+
+        <span class="time">
+          Just now
+        </span>
+
+      </div>`;
+
+  }catch(error){
+
+    status(
+      "aiCareResponse",
+      error.message ||
+      "Unable to reach AI Customer Care right now."
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "Ask Customer Care";
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   CUSTOMER CARE CHAT
+========================================================= */
+
+async function loadCare(){
+
+  const box =
+    $("careChat");
+
+  if(!box){
+    return;
+  }
+
+  if(!me){
+
+    box.innerHTML =
+      `<div class="notice">
+        Please log in to send and receive platform customer-care messages.
+      </div>`;
+
+    return;
+
+  }
+
+  try{
+
+    const data =
+      await api(
+        "chat",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"customer_care"
+
+          })
+        }
+      );
+
+    renderMessages(
+      box,
+      data.messages || []
+    );
+
+  }catch(error){
+
+    box.innerHTML =
+      `<div class="notice error">
+        ${esc(error.message)}
+      </div>`;
+
+  }
+
+}
+
+
+async function sendCareMessage(){
+
+  const input =
+    $("careInput");
+
+  const text =
+    input.value.trim();
+
+  if(!me){
+
+    alert(
+      "Please log in before contacting customer care."
+    );
+
+    return;
+
+  }
+
+  if(!text){
+    return;
+  }
+
+  try{
+
+    const data =
+      await api(
+        "chat",
+        {
+          method:"POST",
+          body:JSON.stringify({
+
+            action:"customer_care_send",
+
+            message:text
+
+          })
+        }
+      );
+
+    input.value = "";
+
+    if(data.messages){
+
+      renderMessages(
+        $("careChat"),
+        data.messages
+      );
+
+    }else{
+
+      loadCare();
+
+    }
+
+  }catch(error){
+
+    alert(error.message);
+
+  }
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logout(){
+
+  me = null;
+  session = null;
+
+  localStorage.removeItem("me");
+  localStorage.removeItem("session");
+  localStorage.removeItem("adminToken");
+
+  activeBuyerConversation = null;
+  activeSellerConversation = null;
+  activeAdminConversation = null;
+
+  updateHeader();
+
+  renderBuyer();
+  renderSeller();
+
+  const adminLogin =
+    $("adminLoginPanel");
+
+  const adminDashboard =
+    $("adminDashboard");
+
+  if(adminLogin)
+    adminLogin.classList.remove("hidden");
+
+  if(adminDashboard)
+    adminDashboard.classList.add("hidden");
+
+  show("shop");
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+function updateHeader(){
+
+  const button =
+    $("logout");
+
+  if(!button){
+    return;
+  }
+
+  if(me || localStorage.getItem("adminToken")){
+
+    button.classList.remove("hidden");
+
+  }else{
+
+    button.classList.add("hidden");
+
+  }
+
+}
+
+
+/* =========================================================
+   SESSION RESTORE
+========================================================= */
+
+function restoreSession(){
+
+  try{
+
+    const savedMe =
+      localStorage.getItem("me");
+
+    const savedSession =
+      localStorage.getItem("session");
+
+    if(savedMe){
+
+      me =
+        JSON.parse(savedMe);
+
+    }
+
+    if(savedSession){
+
+      session =
+        JSON.parse(savedSession);
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "SESSION RESTORE ERROR:",
+      error
+    );
+
+    me = null;
+    session = null;
+
+    localStorage.removeItem("me");
+    localStorage.removeItem("session");
+
+  }
+
+  updateHeader();
+
+}
+
+
+/* =========================================================
+   AUTO REFRESH REAL DASHBOARDS
+========================================================= */
+
+setInterval(() => {
+
+  if(
+    me?.role === "buyer" &&
+    $("buyerDashboard") &&
+    !$("buyerDashboard").classList.contains("hidden")
+  ){
+
+    loadBuyerDashboard();
+
+  }
+
+  if(
+    (
+      me?.role === "seller" ||
+      me?.role === "business"
+    ) &&
+    $("sellerDashboard") &&
+    !$("sellerDashboard").classList.contains("hidden")
+  ){
+
+    loadSellerDashboard();
+
+  }
+
+  if(
+    localStorage.getItem("adminToken") &&
+    $("adminDashboard") &&
+    !$("adminDashboard").classList.contains("hidden")
+  ){
+
+    loadAdminDashboard();
+
+  }
+
+},30000);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    restoreSession();
+
+    loadProducts();
+
+    renderBuyer();
+
+    renderSeller();
+
+    if(
+      localStorage.getItem("adminToken")
+    ){
+
+      renderAdmin();
+
+    }
+
+  }
+);
+
+</script>
+
+</body>
+</html>

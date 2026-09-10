@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INTERNAL_EMAIL_DOMAIN = "users.salgadigitalmart.com";
 
 const headers = {
@@ -22,10 +23,18 @@ export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   if (!SUPABASE_URL) return json({ error: "SUPABASE_URL is not configured in Netlify." }, 500);
-  if (!SUPABASE_SERVICE_ROLE_KEY) return json({ error: "SUPABASE_SERVICE_ROLE_KEY is not configured in Netlify." }, 500);
+  if (!SUPABASE_SECRET_KEY) return json({ error: "SUPABASE_SECRET_KEY is not configured in Netlify." }, 500);
+  if (!SUPABASE_PUBLISHABLE_KEY) return json({ error: "SUPABASE_PUBLISHABLE_KEY is not configured in Netlify." }, 500);
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
+  // Admin client: server-only secret key. Used only for creating/updating users.
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
+  });
+
+  // Auth client: public/publishable key. Keep this separate from the admin
+  // client so the publishable key, not the secret key, is used for password login.
+  const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
   });
 
   try {
@@ -42,8 +51,6 @@ export default async function handler(req) {
     const cleanPhone = phone.replace(/\D/g, "");
     if (!cleanPhone) return json({ error: "Please enter a valid phone number." }, 400);
 
-    // Phone numbers are the public login identifier. Supabase Auth still
-    // requires an email-shaped identifier internally, so use a real domain.
     const authEmail = `${cleanPhone}@${INTERNAL_EMAIL_DOMAIN}`;
 
     if (action === "register") {
@@ -52,7 +59,7 @@ export default async function handler(req) {
         return json({ error: "Business name is required." }, 400);
       }
 
-      const { data: existingProfile, error: existingProfileError } = await supabase
+      const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
         .from("profiles")
         .select("id, phone, role")
         .eq("phone", phone)
@@ -63,7 +70,7 @@ export default async function handler(req) {
         return json({ error: "An account with this phone number already exists. Please log in instead." }, 409);
       }
 
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: authEmail,
         password,
         email_confirm: true,
@@ -83,7 +90,7 @@ export default async function handler(req) {
       }
 
       const user = authData.user;
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
         .upsert({
           id: user.id,
@@ -95,12 +102,12 @@ export default async function handler(req) {
         .single();
 
       if (profileError) {
-        try { await supabase.auth.admin.deleteUser(user.id); } catch {}
+        try { await supabaseAdmin.auth.admin.deleteUser(user.id); } catch {}
         return json({ error: profileError.message }, 500);
       }
 
       if (role === "seller") {
-        const { data: existingBusiness, error: businessCheckError } = await supabase
+        const { data: existingBusiness, error: businessCheckError } = await supabaseAdmin
           .from("businesses")
           .select("id")
           .eq("owner_id", user.id)
@@ -109,14 +116,17 @@ export default async function handler(req) {
         if (businessCheckError) return json({ error: businessCheckError.message }, 500);
 
         if (!existingBusiness) {
-          const { error: businessError } = await supabase
+          const { error: businessError } = await supabaseAdmin
             .from("businesses")
             .insert({ owner_id: user.id, business_name: businessName, status: "active" });
           if (businessError) return json({ error: businessError.message }, 400);
         }
       }
 
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+      // Sign the newly-created user in with the publishable-key auth client.
+      // Do NOT use the secret key for password sign-in: the new Supabase secret
+      // keys are not JWT bearer tokens.
+      const { data: loginData, error: loginError } = await supabaseAuth.auth.signInWithPassword({
         email: authEmail,
         password
       });
@@ -137,7 +147,8 @@ export default async function handler(req) {
       });
     }
 
-    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+    // Normal password login also uses the publishable-key client.
+    const { data: loginData, error: loginError } = await supabaseAuth.auth.signInWithPassword({
       email: authEmail,
       password
     });
@@ -145,7 +156,7 @@ export default async function handler(req) {
     if (loginError) return json({ error: "Invalid phone number or password." }, 401);
 
     const authUser = loginData.user;
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("*")
       .eq("id", authUser.id)

@@ -1,9 +1,9 @@
 {
   "name": "salga-digital-mart-production",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "scripts": {
-    "build": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.mkdirSync('dist',{recursive:true}); for(const f of ['index.html','chat-ui-enhancements.js','chat-widget.js','profile-ui.js','push-ui.js','account-updates.js','pwa-init.js','sw.js','manifest.webmanifest','withdrawal-ui.js']) if(fs.existsSync(f)) fs.copyFileSync(f,'dist/'+f); if(fs.existsSync('icons')) fs.cpSync('icons','dist/icons',{recursive:true}); let p=fs.readFileSync('dist/index.html','utf8'); for(const f of ['profile-ui.js','push-ui.js','account-updates.js','pwa-init.js','withdrawal-ui.js']) if(!p.includes('/'+f)) p=p.replace('</body>','<script src=\\\"/'+f+'\\\"></script>\\n</body>'); fs.writeFileSync('dist/index.html',p); console.log('SALGA Digital Mart Netlify build ready')\""
+    "build": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.mkdirSync('dist',{recursive:true}); for(const f of ['index.html','chat-ui-enhancements.js','chat-widget.js','profile-ui.js','push-ui.js','account-updates.js','pwa-init.js','sw.js','manifest.webmanifest','withdrawal-ui.js','activity-ui.js']) if(fs.existsSync(f)) fs.copyFileSync(f,'dist/'+f); if(fs.existsSync('icons')) fs.cpSync('icons','dist/icons',{recursive:true}); let p=fs.readFileSync('dist/index.html','utf8'); for(const f of ['profile-ui.js','push-ui.js','account-updates.js','pwa-init.js','withdrawal-ui.js','activity-ui.js']) if(!p.includes('/'+f)) p=p.replace('</body>','<script src=\\\"/'+f+'\\\"></script>\\n</body>'); fs.writeFileSync('dist/index.html',p); console.log('SALGA Digital Mart Netlify build ready')\""
   },
   "dependencies": {
     "@netlify/blobs": "^9.0.0",

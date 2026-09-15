@@ -1,9 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INTERNAL_EMAIL_DOMAIN = "users.salgadigitalmart.com";
+const LEGACY_EMAIL_DOMAIN = "users.salgadigitalmart.local";
 const headers = { "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Content-Type, Authorization", "Access-Control-Allow-Methods":"POST, OPTIONS" };
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...headers,"Content-Type":"application/json"}});
 
@@ -38,8 +39,18 @@ export default async function handler(req){
       if(loginError)return json({success:true,message:"Account created successfully. Please log in.",user:{id:user.id,phone,role,full_name:profile.full_name||""}},201);
       return json({success:true,message:"Account created successfully.",user:{id:user.id,phone,role,full_name:profile.full_name||""},session:loginData.session});
     }
-    const {data:loginData,error:loginError}=await supabaseAuth.auth.signInWithPassword({email:authEmail,password});
-    if(loginError)return json({error:"Invalid phone number or password."},401);
+    // Support both the current auth email domain and accounts created before the domain migration.
+    // Existing users keep the same phone/password; we simply try the current address first and
+    // then the legacy address. No password is changed or exposed.
+    let loginData=null;
+    let loginError=null;
+    const loginAttempts=[authEmail,`${cleanPhone}@${LEGACY_EMAIL_DOMAIN}`];
+    for(const email of loginAttempts){
+      const result=await supabaseAuth.auth.signInWithPassword({email,password});
+      if(!result.error){loginData=result.data;loginError=null;break;}
+      loginError=result.error;
+    }
+    if(loginError||!loginData?.user)return json({error:"Invalid phone number or password."},401);
     const authUser=loginData.user;
     const {data:profile,error:profileError}=await supabaseAdmin.from("profiles").select("*").eq("id",authUser.id).single();
     if(profileError||!profile)return json({error:"Your account profile could not be found."},404);

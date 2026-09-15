@@ -4,14 +4,36 @@ import { createClient } from "@supabase/supabase-js";
    ENVIRONMENT
 ========================================================= */
 
-const SUPABASE_URL =
-  Netlify.env.get("SUPABASE_URL");
+// Support the variable names already used by the rest of the
+// SALGA application. The new Netlify deployment may expose the
+// Supabase URL as either SUPABASE_URL or VITE_SUPABASE_URL.
+const env = (name) => {
+  try {
+    if (typeof Netlify !== "undefined" && Netlify.env?.get) {
+      return Netlify.env.get(name);
+    }
+  } catch (_) {}
+  return typeof process !== "undefined" ? process.env?.[name] : undefined;
+};
 
-const SUPABASE_SERVICE_ROLE_KEY =
-  Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL =
+  env("SUPABASE_URL") ||
+  env("VITE_SUPABASE_URL");
+
+// Service-role is preferred for server-side work, but the login
+// itself only needs a publishable/anon key. This prevents admin login
+// from failing solely because the new Netlify site has not yet copied
+// the server-only key.
+const SUPABASE_KEY =
+  env("SUPABASE_SERVICE_ROLE_KEY") ||
+  env("SUPABASE_PUBLISHABLE_KEY") ||
+  env("VITE_SUPABASE_PUBLISHABLE_KEY") ||
+  env("SUPABASE_ANON_KEY");
 
 const ADMIN_EMAIL =
-  "malvisdabz@gmail.com";
+  (env("ADMIN_EMAIL") || "malvisdabz@gmail.com")
+    .trim()
+    .toLowerCase();
 
 /* =========================================================
    HEADERS
@@ -19,10 +41,8 @@ const ADMIN_EMAIL =
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization",
-  "Access-Control-Allow-Methods":
-    "POST, OPTIONS"
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
 /* =========================================================
@@ -30,17 +50,13 @@ const headers = {
 ========================================================= */
 
 function json(data, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...headers,
-        "Content-Type":
-          "application/json"
-      }
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...headers,
+      "Content-Type": "application/json"
     }
-  );
+  });
 }
 
 /* =========================================================
@@ -48,300 +64,125 @@ function json(data, status = 200) {
 ========================================================= */
 
 export default async function handler(req) {
-
-  /* -------------------------------------------------------
-     CORS
-  ------------------------------------------------------- */
-
   if (req.method === "OPTIONS") {
-    return new Response(
-      "ok",
-      { headers }
-    );
+    return new Response("ok", { headers });
   }
-
-  /* -------------------------------------------------------
-     METHOD
-  ------------------------------------------------------- */
 
   if (req.method !== "POST") {
-    return json(
-      {
-        success: false,
-        error: "Method not allowed."
-      },
-      405
-    );
+    return json({
+      success: false,
+      error: "Method not allowed."
+    }, 405);
   }
-
-  /* -------------------------------------------------------
-     ENVIRONMENT CHECK
-  ------------------------------------------------------- */
 
   if (!SUPABASE_URL) {
-    return json(
-      {
-        success: false,
-        error:
-          "SUPABASE_URL is not configured in Netlify."
-      },
-      500
-    );
+    return json({
+      success: false,
+      error: "Supabase URL is not configured in Netlify. Set SUPABASE_URL or VITE_SUPABASE_URL."
+    }, 500);
   }
 
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    return json(
-      {
-        success: false,
-        error:
-          "SUPABASE_SERVICE_ROLE_KEY is not configured in Netlify."
-      },
-      500
-    );
+  if (!SUPABASE_KEY) {
+    return json({
+      success: false,
+      error: "Supabase API key is not configured in Netlify. Set SUPABASE_SERVICE_ROLE_KEY or a publishable/anon key."
+    }, 500);
   }
 
   try {
-
-    /* -----------------------------------------------------
-       READ REQUEST
-    ----------------------------------------------------- */
-
     let body;
-
     try {
-
       body = await req.json();
-
-    } catch (error) {
-
-      return json(
-        {
-          success: false,
-          error:
-            "Invalid JSON request."
-        },
-        400
-      );
+    } catch (_) {
+      return json({
+        success: false,
+        error: "Invalid JSON request."
+      }, 400);
     }
 
-    const email =
-      String(
-        body?.email || ""
-      )
-      .trim()
-      .toLowerCase();
-
-    const password =
-      String(
-        body?.password || ""
-      );
-
-    /* -----------------------------------------------------
-       VALIDATE
-    ----------------------------------------------------- */
+    const email = String(body?.email || "").trim().toLowerCase();
+    const password = String(body?.password || "");
 
     if (!email || !password) {
-
-      return json(
-        {
-          success: false,
-          error:
-            "Admin email and password are required."
-        },
-        400
-      );
+      return json({
+        success: false,
+        error: "Admin email and password are required."
+      }, 400);
     }
 
-    /* -----------------------------------------------------
-       ONLY THE CONFIGURED ADMIN EMAIL
-    ----------------------------------------------------- */
-
-    if (
-      email !==
-      ADMIN_EMAIL.toLowerCase()
-    ) {
-
-      return json(
-        {
-          success: false,
-          error:
-            "Invalid admin email or password."
-        },
-        401
-      );
+    if (email !== ADMIN_EMAIL) {
+      return json({
+        success: false,
+        error: "Invalid admin email or password."
+      }, 401);
     }
 
-    /* -----------------------------------------------------
-       SUPABASE ADMIN CLIENT
-    ----------------------------------------------------- */
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
-    const supabase =
-      createClient(
-        SUPABASE_URL,
-        SUPABASE_SERVICE_ROLE_KEY,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-    /* -----------------------------------------------------
-       REAL SUPABASE LOGIN
-    ----------------------------------------------------- */
-
-    const {
-      data,
-      error
-    } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
     if (error) {
-
-      console.error(
-        "SUPABASE ADMIN LOGIN ERROR:",
-        error
-      );
-
-      return json(
-        {
-          success: false,
-          error:
-            "Invalid admin email or password."
-        },
-        401
-      );
+      console.error("SUPABASE ADMIN LOGIN ERROR:", error);
+      return json({
+        success: false,
+        error: "Invalid admin email or password."
+      }, 401);
     }
 
-    /* -----------------------------------------------------
-       VERIFY SESSION
-    ----------------------------------------------------- */
-
-    if (
-      !data ||
-      !data.user ||
-      !data.session ||
-      !data.session.access_token
-    ) {
-
-      return json(
-        {
-          success: false,
-          error:
-            "Admin authentication did not return a secure session."
-        },
-        401
-      );
+    if (!data?.user || !data?.session?.access_token) {
+      return json({
+        success: false,
+        error: "Admin authentication did not return a secure session."
+      }, 401);
     }
 
-    /* -----------------------------------------------------
-       VERIFY EMAIL AGAIN
-    ----------------------------------------------------- */
-
-    const authenticatedEmail =
-      String(
-        data.user.email || ""
-      )
+    const authenticatedEmail = String(data.user.email || "")
       .trim()
       .toLowerCase();
 
-    if (
-      authenticatedEmail !==
-      ADMIN_EMAIL.toLowerCase()
-    ) {
-
-      return json(
-        {
-          success: false,
-          error:
-            "This account is not authorized as an administrator."
-        },
-        403
-      );
+    if (authenticatedEmail !== ADMIN_EMAIL) {
+      return json({
+        success: false,
+        error: "This account is not authorized as an administrator."
+      }, 403);
     }
 
-    /* -----------------------------------------------------
-       REAL SECURE TOKEN
-    ----------------------------------------------------- */
+    const accessToken = data.session.access_token;
+    const refreshToken = data.session.refresh_token || null;
 
-    const accessToken =
-      data.session.access_token;
-
-    const refreshToken =
-      data.session.refresh_token || null;
-
-    /* -----------------------------------------------------
-       SUCCESS
-    ----------------------------------------------------- */
-
-    return json(
-      {
-        success: true,
-
-        message:
-          "Admin login successful.",
-
-        token:
-          accessToken,
-
-        access_token:
-          accessToken,
-
-        refresh_token:
-          refreshToken,
-
-        user: {
-          id:
-            data.user.id,
-
-          email:
-            data.user.email,
-
-          role:
-            "admin"
-        },
-
-        session: {
-          access_token:
-            accessToken,
-
-          refresh_token:
-            refreshToken,
-
-          expires_at:
-            data.session.expires_at,
-
-          expires_in:
-            data.session.expires_in,
-
-          token_type:
-            data.session.token_type || "bearer"
-        }
+    return json({
+      success: true,
+      message: "Admin login successful.",
+      token: accessToken,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        role: "admin"
       },
-      200
-    );
-
+      session: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: data.session.expires_at,
+        expires_in: data.session.expires_in,
+        token_type: data.session.token_type || "bearer"
+      }
+    }, 200);
   } catch (error) {
-
-    console.error(
-      "ADMIN FUNCTION ERROR:",
-      error
-    );
-
-    return json(
-      {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Admin authentication failed."
-      },
-      500
-    );
+    console.error("ADMIN FUNCTION ERROR:", error);
+    return json({
+      success: false,
+      error: error instanceof Error ? error.message : "Admin authentication failed."
+    }, 500);
   }
 }
 
@@ -350,6 +191,5 @@ export default async function handler(req) {
 ========================================================= */
 
 export const config = {
-  path:
-    "/api/admin"
+  path: "/api/admin"
 };

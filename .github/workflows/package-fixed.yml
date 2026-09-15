@@ -4,52 +4,12 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
   package:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Apply customer care fix
-        shell: python
-        run: |
-          from pathlib import Path
-          import re
-
-          index = Path("index.html")
-          text = index.read_text(encoding="utf-8")
-
-          pattern = r'\s*<h3>Contact Platform Customer Care</h3>.*?(?=\s*<section[^>]+id=["\']admin["\'])'
-          patched, count = re.subn(pattern, "\n", text, count=1, flags=re.S)
-          if count != 1:
-              raise SystemExit("Duplicate customer-care chat block was not found; refusing to modify index.html")
-          index.write_text(patched, encoding="utf-8")
-
-          chat = Path("netlify/functions/chat.mjs")
-          c = chat.read_text(encoding="utf-8")
-          old_instruction = 'Be friendly, concise and practical.'
-          new_instruction = 'Be friendly, complete and practical. Answer the user\'s full question rather than stopping mid-answer. Give clear numbered steps when the user is asking how to do something. Include important conditions, next steps and warnings when relevant. Do not unnecessarily ask follow-up questions if you can answer from the platform information you have.'
-          if old_instruction not in c:
-              raise SystemExit("Customer Care instruction text was not found; refusing to modify chat.mjs")
-          c = c.replace(old_instruction, new_instruction, 1)
-          if 'max_output_tokens:700' not in c:
-              raise SystemExit("Customer Care output limit was not found; refusing to modify chat.mjs")
-          c = c.replace('max_output_tokens:700', 'max_output_tokens:1400', 1)
-          chat.write_text(c, encoding="utf-8")
-
-      - name: Commit customer care fix
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html netlify/functions/chat.mjs
-          if ! git diff --cached --quiet; then
-            git commit -m "fix: simplify customer care and improve AI answers"
-            git push
-          fi
 
       - name: Validate production JavaScript
         run: |

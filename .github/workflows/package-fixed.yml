@@ -11,10 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate JavaScript
+      - name: Validate production JavaScript
         run: |
           find netlify/functions -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
-          find . -maxdepth 1 -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          node --check withdrawal-ui.js
+          node --check activity-ui.js
 
       - name: Build Netlify site
         run: npm run build

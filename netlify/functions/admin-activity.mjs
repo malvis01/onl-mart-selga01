@@ -17,7 +17,7 @@ export default async function handler(req){
     if(error)throw error;
     const [users,businesses,orders,products]=await Promise.all([
       supabase.from("profiles").select("id,full_name,phone,email,role,created_at,updated_at").order("created_at",{ascending:false}),
-      supabase.from("businesses").select("id,owner_id,business_name,status,verified,created_at,updated_at").order("created_at",{ascending:false}),
+      supabase.from("businesses").select("id,owner_id,business_name,status,verified,created_at").order("created_at",{ascending:false}),
       supabase.from("orders").select("id,buyer_id,business_id,total_amount,status,payment_status,created_at,updated_at").order("created_at",{ascending:false}),
       supabase.from("products").select("id,business_id,name,status,approved,stock,created_at,updated_at").order("created_at",{ascending:false})
     ]);

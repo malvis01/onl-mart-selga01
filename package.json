@@ -3,7 +3,7 @@
   "version": "1.0.6",
   "private": true,
   "scripts": {
-    "build": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.mkdirSync('dist',{recursive:true}); for(const f of ['index.html','chat-ui-enhancements.js','chat-widget.js','profile-ui.js','push-ui.js','sw.js','manifest.webmanifest']) if(fs.existsSync(f)) fs.copyFileSync(f,'dist/'+f); if(fs.existsSync('icons')) fs.cpSync('icons','dist/icons',{recursive:true}); let p=fs.readFileSync('dist/index.html','utf8'); if(!p.includes('/profile-ui.js')) p=p.replace('</body>','<script src=\\\"/profile-ui.js\\\"></script>\\n'); if(!p.includes('/push-ui.js')) p=p.replace('</body>','<script src=\\\"/push-ui.js\\\"></script>\\n</body>'); fs.writeFileSync('dist/index.html',p); console.log('SALGA Digital Mart Netlify build ready')\""
+    "build": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.mkdirSync('dist',{recursive:true}); for(const f of ['index.html','chat-ui-enhancements.js','chat-widget.js','profile-ui.js','push-ui.js','pwa-init.js','sw.js','manifest.webmanifest']) if(fs.existsSync(f)) fs.copyFileSync(f,'dist/'+f); if(fs.existsSync('icons')) fs.cpSync('icons','dist/icons',{recursive:true}); let p=fs.readFileSync('dist/index.html','utf8'); if(!p.includes('/profile-ui.js')) p=p.replace('</body>','<script src=\\\"/profile-ui.js\\\"></script>\\n'); if(!p.includes('/push-ui.js')) p=p.replace('</body>','<script src=\\\"/push-ui.js\\\"></script>\\n'); if(!p.includes('/pwa-init.js')) p=p.replace('</body>','<script src=\\\"/pwa-init.js\\\"></script>\\n</body>'); fs.writeFileSync('dist/index.html',p); console.log('SALGA Digital Mart Netlify build ready')\""
   },
   "dependencies": {
     "@netlify/blobs": "^9.0.0",

@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PAYSTACK_SECRET=process.env.PAYSTACK_SECRET_KEY;
@@ -8,7 +7,6 @@ const headers={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,"Content-Type":"application/json"}});
 async function getUser(req){const a=req.headers.get("authorization");if(!a?.startsWith("Bearer "))return null;const {data,error}=await supabase.auth.getUser(a.slice(7));return error||!data?.user?null:data.user;}
 async function paystack(path,options={}){return fetch("https://api.paystack.co"+path,{...options,headers:{Authorization:`Bearer ${PAYSTACK_SECRET}`,"Content-Type":"application/json",...(options.headers||{})}})}
-
 export default async function handler(req){
  if(req.method==="OPTIONS")return new Response("ok",{headers});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
@@ -29,7 +27,6 @@ export default async function handler(req){
   };
   if(patch.account_number && patch.account_number.length!==10)return json({error:"A Nigerian bank account number should contain 10 digits."},400);
   if(patch.bank_code && !/^\d{3,6}$/.test(patch.bank_code))return json({error:"Please enter a valid bank code."},400);
-
   if(PAYSTACK_SECRET && patch.account_number && patch.bank_code && (!business.payout_recipient_code || patch.account_number!==business.account_number || patch.bank_code!==business.bank_code)){
    const name=patch.account_name||business.business_name||u.email||"SALGA Seller";
    const r=await paystack("/transferrecipient",{method:"POST",body:JSON.stringify({type:"nuban",name,account_number:patch.account_number,bank_code:patch.bank_code,currency:"NGN",description:`SALGA seller ${business.id}`})});
@@ -42,7 +39,9 @@ export default async function handler(req){
   const {data:updated,error:ue}=await supabase.from("businesses").update(patch).eq("id",business.id).select("id,business_name,address,location,bank_name,bank_code,account_number,account_name,payout_provider,payout_recipient_code,payout_verified_at").single();
   if(ue)throw ue;
   const account={business_id:business.id,owner_id:u.id,provider:patch.payout_provider||"paystack",bank_name:patch.bank_name,bank_code:patch.bank_code,account_number:patch.account_number,account_name:patch.account_name,recipient_code:patch.payout_recipient_code||business.payout_recipient_code||null,verified:!!(patch.payout_recipient_code||business.payout_recipient_code),verified_at:patch.payout_verified_at||business.payout_verified_at||null,is_default:true,updated_at:new Date().toISOString()};
-  await supabase.from("seller_payout_accounts").upsert(account,{onConflict:"business_id"});
+  const {data:existingAccount}=await supabase.from("seller_payout_accounts").select("id").eq("business_id",business.id).eq("is_default",true).maybeSingle();
+  if(existingAccount)await supabase.from("seller_payout_accounts").update(account).eq("id",existingAccount.id);
+  else await supabase.from("seller_payout_accounts").insert(account);
   return json({success:true,business:updated,message:"Business delivery location and payout details saved."});
  }catch(e){console.error("SALGA SELLER PROFILE ERROR",e);return json({error:e?.message||"Could not save business details."},500)}
 }

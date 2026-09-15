@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   package:
     runs-on: ubuntu-latest
@@ -15,50 +18,30 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           index = Path("index.html")
           text = index.read_text(encoding="utf-8")
 
-          old = '''    <h3>Contact Platform Customer Care</h3>
-
-    <div
-      id="careChat"
-      class="chat-box">
-    </div>
-
-    <div class="row">
-
-      <input
-        id="careInput"
-        placeholder="Write your message..."
-        style="flex:1;padding:11px;border:1px solid #d6dde1;border-radius:8px"
-        onkeydown="if(event.key==='Enter')sendCareMessage()">
-
-      <button
-        class="btn"
-        onclick="sendCareMessage()">
-        Send
-      </button>
-
-    </div>
-'''
-
-          if old not in text:
-              raise SystemExit("Expected duplicate customer-care chat block was not found; refusing to modify index.html")
-
-          index.write_text(text.replace(old, "", 1), encoding="utf-8")
+          pattern = r'\s*<h3>Contact Platform Customer Care</h3>.*?(?=\s*<section[^>]+id=["\']admin["\'])'
+          patched, count = re.subn(pattern, "\n", text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("Duplicate customer-care chat block was not found; refusing to modify index.html")
+          index.write_text(patched, encoding="utf-8")
 
           chat = Path("netlify/functions/chat.mjs")
           c = chat.read_text(encoding="utf-8")
-          old_instruction = '''Be friendly, concise and practical. Current role: ${body.context?.role||"guest"}.`,input:message,max_output_tokens:700});'''
-          new_instruction = '''Be friendly, complete and practical. Answer the user's full question rather than stopping mid-answer. Give clear numbered steps when the user is asking how to do something. Include important conditions, next steps and warnings when relevant. Do not unnecessarily ask follow-up questions if you can answer from the platform information you have. Current role: ${body.context?.role||"guest"}.`,input:message,max_output_tokens:1400});'''
+          old_instruction = 'Be friendly, concise and practical.'
+          new_instruction = 'Be friendly, complete and practical. Answer the user\'s full question rather than stopping mid-answer. Give clear numbered steps when the user is asking how to do something. Include important conditions, next steps and warnings when relevant. Do not unnecessarily ask follow-up questions if you can answer from the platform information you have.'
           if old_instruction not in c:
-              raise SystemExit("Expected AI Customer Care instruction block was not found; refusing to modify chat.mjs")
-          chat.write_text(c.replace(old_instruction, new_instruction, 1), encoding="utf-8")
+              raise SystemExit("Customer Care instruction text was not found; refusing to modify chat.mjs")
+          c = c.replace(old_instruction, new_instruction, 1)
+          if 'max_output_tokens:700' not in c:
+              raise SystemExit("Customer Care output limit was not found; refusing to modify chat.mjs")
+          c = c.replace('max_output_tokens:700', 'max_output_tokens:1400', 1)
+          chat.write_text(c, encoding="utf-8")
 
       - name: Commit customer care fix
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

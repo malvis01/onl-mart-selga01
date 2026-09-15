@@ -1,0 +1,11 @@
+{
+  "name": "SALGA Digital Mart",
+  "short_name": "SALGA Mart",
+  "description": "Buy and sell with local businesses through SALGA Digital Mart.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7f8",
+  "theme_color": "#075e54",
+  "orientation": "portrait-primary"
+}

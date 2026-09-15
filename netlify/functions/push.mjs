@@ -9,34 +9,40 @@ const PUBLIC_KEY = env("SALGA_VAPID_PUBLIC_KEY") || "";
 const PRIVATE_KEY = env("SALGA_VAPID_PRIVATE_KEY") || "";
 const SUBJECT = env("SALGA_VAPID_SUBJECT") || "mailto:admin@salgadigitalmart.com";
 
-export function pushConfigured() {
-  return Boolean(PUBLIC_KEY && PRIVATE_KEY);
-}
-
+export function pushConfigured() { return Boolean(PUBLIC_KEY && PRIVATE_KEY); }
 function configure() {
   if (!pushConfigured()) return false;
   webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
   return true;
 }
 
+export async function unreadPushCount(recipientId) {
+  const { count, error } = await supabase
+    .from("order_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", recipientId)
+    .is("read_at", null);
+  if (error) throw error;
+  return Number(count || 0);
+}
+
 export async function sendSalgaPush(recipientId, payload) {
   if (!recipientId || !configure()) return { sent: 0, configured: false };
-
   const { data: rows, error } = await supabase
     .from("push_subscriptions")
     .select("id,endpoint,p256dh,auth,expiration_time")
     .eq("user_id", recipientId);
   if (error) throw error;
-
+  const badgeCount = await unreadPushCount(recipientId);
+  const message = JSON.stringify({ ...payload, badgeCount });
   let sent = 0;
   for (const row of rows || []) {
-    const subscription = {
-      endpoint: row.endpoint,
-      expirationTime: row.expiration_time ?? null,
-      keys: { p256dh: row.p256dh, auth: row.auth }
-    };
     try {
-      await webpush.sendNotification(subscription, JSON.stringify(payload), { TTL: 86400 });
+      await webpush.sendNotification({
+        endpoint: row.endpoint,
+        expirationTime: row.expiration_time ?? null,
+        keys: { p256dh: row.p256dh, auth: row.auth }
+      }, message, { TTL: 86400 });
       sent += 1;
     } catch (error) {
       const status = Number(error?.statusCode || 0);
@@ -48,16 +54,6 @@ export async function sendSalgaPush(recipientId, payload) {
     }
   }
   return { sent, configured: true };
-}
-
-export async function unreadPushCount(recipientId) {
-  const { count, error } = await supabase
-    .from("order_notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("recipient_id", recipientId)
-    .eq("read", false);
-  if (error) throw error;
-  return Number(count || 0);
 }
 
 export { PUBLIC_KEY };

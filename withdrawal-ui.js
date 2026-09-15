@@ -3,6 +3,7 @@
   const token=()=>{try{return JSON.parse(localStorage.getItem("session")||"null")?.access_token||""}catch{return ""}};
   const adminToken=()=>localStorage.getItem("adminToken")||"";
   async function post(body,auth){const r=await fetch("/api/withdrawals",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${auth||token()}`},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||d.message||"Withdrawal operation failed.");return d;}
+  async function realSellerBalance(){const r=await fetch("/api/seller-withdrawal-balance",{headers:{Authorization:`Bearer ${token()}`}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Could not load seller balance.");return d;}
   window.sellerWithdrawal=async function(){
     const amount=Number(document.getElementById("sellerWithdrawAmount")?.value);
     if(!amount||amount<=0){if(window.status)status("sellerWithdrawMessage","Enter a valid withdrawal amount.");return;}
@@ -18,8 +19,9 @@
     if(pin===null)return;
     const confirm=prompt("Re-enter the new 4-digit PIN.");
     if(pin!==confirm||!/^[0-9]{4}$/.test(pin)){alert("The PINs do not match or are not exactly 4 digits.");return;}
-    try{const d=await post({action:"seller_set_pin",current_pin:current,pin});alert(d.message||"Withdrawal PIN saved.");}catch(e){alert(e.message);}
+    try{const d=await post({action:"seller_set_pin",current_pin:current,pin});alert(d.message||"Withdrawal PIN saved.");refreshSellerWithdrawal();}catch(e){alert(e.message);}
   };
+  async function refreshSellerWithdrawal(){try{const d=await realSellerBalance();const box=document.getElementById("sellerWithdrawalInfo");if(!box)return;box.innerHTML=`<div class="record-line"><span>Available balance</span><strong>${typeof money==="function"?money(d.available_balance):`₦${Number(d.available_balance||0).toLocaleString("en-NG",{minimumFractionDigits:2})`}</strong></div><div class="record-line"><span>Bank</span><strong>${String(d.business?.bank_name||"")}</strong></div><div class="record-line"><span>Account number</span><strong>${String(d.business?.account_number||"")}</strong></div><div class="record-line"><span>Withdrawal PIN</span><strong>${d.pin_set?"Set":"Not set"}</strong></div>`;}catch(e){}}
   window.adminWithdrawal=async function(){
     const amount=Number(document.getElementById("adminWithdrawAmount")?.value);
     const bank=document.getElementById("adminWithdrawBank")?.value.trim();
@@ -53,5 +55,6 @@
     if(sellerBox&&!document.getElementById("setSellerWithdrawalPinBtn")){
       const b=document.createElement("button");b.id="setSellerWithdrawalPinBtn";b.className="btn gray";b.type="button";b.textContent="Set / Change Withdrawal PIN";b.onclick=window.setSellerWithdrawalPin;sellerBox.parentElement?.appendChild(b);
     }
+    setTimeout(refreshSellerWithdrawal,500);
   });
 })();

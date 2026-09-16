@@ -52,23 +52,30 @@ export default async function handler(req) {
   try {
     const { data, error } = await supabase
       .from("businesses")
-      .select("id,business_name,owner_id,status,created_at,profiles!businesses_owner_id_fkey(id,full_name,phone,email,created_at,account_status,role)")
+      .select("id,business_name,owner_id,status,created_at,profiles!businesses_owner_id_fkey(id,full_name,created_at,account_status,role)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (authError) throw authError;
+    const authById = new Map((authData?.users || []).map(user => [user.id, user]));
+
     const rows = (data || [])
       .filter(row => row.profiles?.role === "seller")
-      .map(row => ({
-        business_id: row.id,
-        business_name: row.business_name || "Unnamed business",
-        owner_id: row.owner_id,
-        owner_name: row.profiles?.full_name || "Not provided",
-        account_phone: row.profiles?.phone || "Not provided",
-        registration_date: row.profiles?.created_at || row.created_at,
-        account_status: row.profiles?.account_status || "active",
-        business_status: row.status || "active"
-      }));
+      .map(row => {
+        const authUser = authById.get(row.owner_id);
+        return {
+          business_id: row.id,
+          business_name: row.business_name || "Unnamed business",
+          owner_id: row.owner_id,
+          owner_name: row.profiles?.full_name || "Not provided",
+          account_phone: authUser?.phone || "Not provided",
+          registration_date: authUser?.created_at || row.profiles?.created_at || row.created_at,
+          account_status: row.profiles?.account_status || "active",
+          business_status: row.status || "active"
+        };
+      });
 
     return json({ success: true, count: rows.length, businesses: rows });
   } catch (error) {

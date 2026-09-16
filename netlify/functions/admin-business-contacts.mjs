@@ -52,7 +52,7 @@ export default async function handler(req) {
   try {
     const { data, error } = await supabase
       .from("businesses")
-      .select("id,business_name,owner_id,status,created_at,profiles!businesses_owner_id_fkey(id,full_name,created_at,account_status,role)")
+      .select("id,business_name,owner_id,phone,whatsapp,status,created_at,profiles!businesses_owner_id_fkey(id,full_name,phone,created_at,account_status,role)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -65,12 +65,16 @@ export default async function handler(req) {
       .filter(row => row.profiles?.role === "seller")
       .map(row => {
         const authUser = authById.get(row.owner_id);
+        const accountPhone = String(authUser?.phone || "").trim();
+        const businessPhone = String(row.phone || "").trim();
+        const profilePhone = String(row.profiles?.phone || "").trim();
+        const whatsapp = String(row.whatsapp || "").trim();
         return {
           business_id: row.id,
           business_name: row.business_name || "Unnamed business",
           owner_id: row.owner_id,
           owner_name: row.profiles?.full_name || "Not provided",
-          account_phone: authUser?.phone || "Not provided",
+          account_phone: accountPhone || businessPhone || profilePhone || whatsapp || "Not provided",
           registration_date: authUser?.created_at || row.profiles?.created_at || row.created_at,
           account_status: row.profiles?.account_status || "active",
           business_status: row.status || "active"
